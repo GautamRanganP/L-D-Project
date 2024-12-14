@@ -1,12 +1,12 @@
 <template>
   <div>
-    <header class="bg-blue-100">
-        <nav class="container mx-auto px-6 py-3">
+    <header class="bg-blue-100" >
+        <nav class="px-6 py-3">
             <div class="flex justify-between items-center">
-                <a href="#" class="text-2xl font-bold text-gray-800">L&D</a>
+                <a href="#" class="text-2xl font-bold text-gray-800"><img src="./assets/50.jpg" width="35" height="35"> </a>
                 <div class="flex space-x-4">
                     <RouterLink to="/" class="text-gray-800">Attendance Generator</RouterLink>
-                    <RouterLink to="/lmsform" class="text-gray-800">LMS Course Session </RouterLink>
+                    <RouterLink to="/lmsform" class="text-gray-800">Training Calendar </RouterLink>
                 </div>
             </div>
         </nav>

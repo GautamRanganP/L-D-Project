@@ -1,5 +1,46 @@
 <template>
-    <form class="w-full mx-auto max-w-lg mt-6">
+    <p style="font-size: 26px;font-weight: 600;color: red;text-align: center;margin-top: 10px;">...Under Development</p>
+    <table class="border-collapse border-2 border-gray-500 mx-auto">
+  <thead>
+    <tr>
+      <th class="border border-gray-400 px-4 py-2 text-gray-800">Training Name</th>
+      <th class="border border-gray-400 px-4 py-2 text-gray-800">Start Date & End Date </th>
+      <th class="border border-gray-400 px-4 py-2 text-gray-800">Total Hours</th>
+      <th class="border border-gray-400 px-4 py-2 text-gray-800">Training Status</th>
+      <th class="border border-gray-400 px-4 py-2 text-gray-800">Registration Deadline</th>
+      <th class="border border-gray-400 px-4 py-2 text-gray-800">Registration Link</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="border border-gray-400 px-4 py-2">ReactJs</td>
+      <td class="border border-gray-400 px-4 py-2">August 5th to 19th, 2024 11:00 am to 12:00 pm, IST</td>
+      <td class="border border-gray-400 px-4 py-2">19 hrs</td>
+      <td class="border border-gray-400 px-4 py-2">Upcoming</td>
+      <td class="border border-gray-400 px-4 py-2">August 3th, 2024</td>
+      <td class="border border-gray-400 px-4 py-2"><a href="">Link</a></td>
+    </tr>
+    <tr>
+      <td class="border border-gray-400 px-4 py-2">AngularJs</td>
+      <td class="border border-gray-400 px-4 py-2">December 5th to 19th, 2024 11:00 am to 12:00 pm, IST</td>
+      <td class="border border-gray-400 px-4 py-2">19 hrs</td>
+      <td class="border border-gray-400 px-4 py-2">Upcoming</td>
+      <td class="border border-gray-400 px-4 py-2"></td>
+      <td class="border border-gray-400 px-4 py-2"><a href="">Link</a></td>
+    </tr>
+    <tr>
+      <td class="border border-gray-400 px-4 py-2">NodeJS</td>
+      <td class="border border-gray-400 px-4 py-2">October 5th to 19th, 2024 11:00 am to 12:00 pm, IST</td>
+      <td class="border border-gray-400 px-4 py-2">19 hrs</td>
+      <td class="border border-gray-400 px-4 py-2">Upcoming</td>
+      <td class="border border-gray-400 px-4 py-2">August 3th, 2024</td>
+      <td class="border border-gray-400 px-4 py-2"><a href="">Link</a></td>
+    </tr>
+  </tbody>
+</table>
+
+ 
+    <!-- <form class="w-full mx-auto max-w-lg mt-6">
       <div class="flex flex-wrap -mx-3 mb-6">
         <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0">
           <label
@@ -111,7 +152,7 @@
           />
         </div>
       </div>
-    </form>
+    </form> -->
 </template>
 
 <script>

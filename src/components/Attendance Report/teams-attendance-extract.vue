@@ -1,14 +1,15 @@
 <template>
   <form
     @submit.prevent="handleExcel"
-    class="w-full mx-auto max-w-lg mt-6"
+    class="w-full mx-auto max-w-sm rounded overflow-hidden shadow-lg mt-6"
     id="attendance-form"
     ref="attendanceForm"
   >
-    <h1 class="text-center font-bold">Attendance Report Generator</h1>
+    <h1 class="text-center font-bold" style="background-color: #F0E7D8;padding: 8px;font-size: 19px;">Attendance Report Generator</h1>
+    <div style="padding: 20px 30px;display: flex;gap: 20px;flex-direction: column;" v-if="!exportReady">
     <div class="form-control">
       <label for="formAttendance">Teams Attendance</label>
-      <input type="file" id="formAttendance" multiple />
+      <input type="file" id="formAttendance" multiple required/>
     </div>
     <div class="form-control">
       <label for="">Have Nomination Sheet</label>
@@ -25,7 +26,7 @@
     </div>
     <div class="form-control" v-if="selectOption !== 'No'">
       <label for="nomination">Nominations</label>
-      <input type="file" id="nomination" />
+      <input type="file" id="nomination" required />
     </div>
     <div class="form-control">
       <label for="formAttendance">Minimum Stay</label>
@@ -37,14 +38,23 @@
         <option value="60">1 hour</option>
       </select>
     </div>
-    <div class="form-button" v-if="!loading">
+  </div>
+<div class="extract-result" v-if="exportReady" style="padding: 20px;">
+  <p><span style="min-width: 150px;display:inline-block;">Total Nomination </span>: {{ finalAttendance.length }}</p> 
+  <p><span style="min-width: 150px;display:inline-block;">Attended </span>: {{ finalAttendance.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50).length }}</p>
+  <p><span style="min-width: 150px;display:inline-block;">Not Attended </span>: {{ finalAttendance.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length}}</p>
+</div>
+
+    <div class="form-button" v-if="!loading" style="padding-bottom: 20px;">
       <button type="submit" v-if="finalAttendance.length === 0">Extract</button>
       <button @click="clearAttendance" v-else>Resubmit</button>
       <button v-if="exportReady" @click="exportExcel">Export</button>
     </div>
-    <div v-else>
+    <div style="padding-bottom: 20px;" v-else >
       <p>Loading...</p>
     </div>
+
+  
   </form>
 </template>
 
@@ -71,8 +81,12 @@ export default {
     clearAttendance() {
       this.exportReady = false;
       this.dynamicNomination = [];
-      (this.finalAttendance = []), (this.trainingInformation = []);
+      this.finalAttendance = [];
+      this.trainingInformation = [];
       this.$refs.attendanceForm.reset();
+      this.selectOption ='No';
+      this.minDurationStay = 0;
+      
     },
     async handleExcel(e) {
       this.loading = true;
@@ -291,6 +305,7 @@ export default {
       return [...numbers, ...strings];
     },
     async exportExcel() {
+      this.loading = true
       const workbook = new ExcelJS.Workbook();
       workbook.creator = "Gautam Rangan P";
       workbook.lastModifiedBy = "Bot";
@@ -465,9 +480,7 @@ export default {
         rules: [
           {
             type: "dataBar",
-            minLength: 0,
-            maxLength: 100,
-            cfvo: [{ type: "min" }, { type: "max" }],
+            cfvo: [{ type: "num",value:0 }, { type: "num",value:100 }],
             color: { argb: "FFFF5050" },
           },
         ],
@@ -486,6 +499,7 @@ export default {
       ); // Simulate a click event on the download link
       downloadLink.click(); // Clean up by revoking the blob URL
       window.URL.revokeObjectURL(blobUrl);
+      this.loading = false
     },
     async extractNomination(file, sheetCount) {
       const workbook = new ExcelJS.Workbook();
@@ -527,12 +541,6 @@ export default {
 <style>
 #attendance-form {
   font-weight: 600;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  background-color: white;
-  border-radius: 10px;
 }
 #attendance-form button {
   padding: 6px 18px;
@@ -549,10 +557,15 @@ export default {
 }
 #attendance-form input[type="file"],
 #attendance-form select {
-  background-color: black;
-  padding: 15px;
-  border-radius: 5px;
-  color: white;
+  /* background-color: black; */
+  /* background-color: #AB9B96; */
+  padding: 8px 16px;
+  /* border-radius: 10px; */
+  outline: 2px gray solid;
+  /* color: white; */
+}
+#attendance-form select{
+  padding: 8px 0px
 }
 .form-control {
   display: flex;
