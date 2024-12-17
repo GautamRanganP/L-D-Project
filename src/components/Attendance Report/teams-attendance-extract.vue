@@ -40,9 +40,9 @@
     </div>
   </div>
 <div class="extract-result" v-if="exportReady" style="padding: 20px;">
-  <p><span style="min-width: 150px;display:inline-block;">Total Nomination </span>: {{ finalAttendance.length }}</p> 
-  <p><span style="min-width: 150px;display:inline-block;">Attended </span>: {{ finalAttendance.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50).length }}</p>
-  <p><span style="min-width: 150px;display:inline-block;">Not Attended </span>: {{ finalAttendance.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length}}</p>
+  <p><span style="min-width: 150px;display:inline-block;">Total Nomination </span>: {{ selectOption === 'Yes' ? finalAttendanceWithNomination.length + finalAttendancedifference.length : finalAttendance.length }}</p> 
+  <p><span style="min-width: 150px;display:inline-block;">Attended </span>: {{selectOption === 'Yes' ? finalAttendanceWithNomination.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50).length + finalAttendancedifference.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50).length : finalAttendance.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50).length }} </p>
+  <p><span style="min-width: 150px;display:inline-block;">Not Attended </span>: {{selectOption === 'Yes' ? finalAttendanceWithNomination.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length + finalAttendancedifference.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length : finalAttendance.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length }} </p>
 </div>
 
     <div class="form-button" v-if="!loading" style="padding-bottom: 20px;">
