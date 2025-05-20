@@ -108,14 +108,19 @@ export default {
               if (!trainingDetails.trainingName)
                 trainingDetails.trainingName = match[1];
             }
+
+
             await Papa.parse(file, {
               header: true,
               dynamicTyping: true,
               complete: (results) => {
+                console.log(results)
                 trainingDetails.trainingParticipant.push({
                   date: match[2],
-                  participants: this.extractFromTeamsAttendance(results.data),
+                  participants: this.extractFromTeamsAttendance(results.data,trainingDetails.trainingName),
                 });
+                trainingDetails.trainingParticipant.sort((a, b) => new Date(a.date) - new Date(b.date));
+                console.log("training",trainingDetails,results)
               },
             });
           }
@@ -158,7 +163,7 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
         console.error(err);
       }
     },
-    extractFromTeamsAttendance(dataArray) {
+    extractFromTeamsAttendance(dataArray,name) {
       let isEnable = false;
       let result = [];
       for (let teams of dataArray) {
@@ -176,6 +181,32 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
           }
           if (teams[key] === null) isEnable = false;
           if (isEnable) {
+            console.log("key",key,teams[key])
+            console.log("name",name)
+            if(name.toLowerCase().includes("training") && name.toLowerCase().includes("invite")){
+              console.log("true",teams[key])
+              if(teams[key] && teams[key] !== "Name"){
+                          if (typeof teams[key] === "string"){
+                              participant.NAME = teams[key].split("\t")[0]
+                              participant.DATE = teams[key].split("\t")[1]
+                              continue
+                            }else{
+                              let extractedData = teams[key][1].split("\t")
+                              participant.DURATION = extractedData[1]
+                              participant.EMAIL = extractedData[2]
+                              if (extractedData[3] && extractedData[3].includes("@hexaware"))
+                                  participant.EMPID = Number(extractedData[3].replace(/\D/g, ""));
+                              else 
+                                  participant.EMPID = participant.NAME;
+                              }
+          
+                if(participant.NAME && participant.DURATION){ 
+                  result.push(participant);
+                }
+              }
+            }
+            else{
+              console.log("false")
             if (
               teams[key] === "Name" ||
               (teams[key] &&
@@ -203,6 +234,10 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
 
               result.push(participant);
             }
+            
+          }
+          
+          
           }
         }
       }
@@ -280,6 +315,8 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
       return finalAttendanceSheet;
     },
     filterParticipants(data, delay = 30) {
+      
+      console.log("filter",data)
       const filteredParticipants = data.filter((participant) => {
         const durationStr = participant.DURATION;
         const components = durationStr.split(" ");
@@ -456,7 +493,8 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
       console.log('col',this.finalAttendanceWithNomination.length,finalAttendance.length,this.finalAttendancedifference.length)
       dataRows.forEach((row,rowNumber) => {
         row.eachCell((cell, colNumber) => {
-          console.log('row',rowNumber,this.finalAttendanceWithNomination.length,finalAttendance.length,this.finalAttendancedifference)
+          // console.log('row',rowNumber,this.finalAttendanceWithNomination.length,finalAttendance.length,this.finalAttendancedifference)
+        
           if(this.finalAttendanceWithNomination.length > 0 && rowNumber >= this.finalAttendanceWithNomination.length - 1 && rowNumber <= finalAttendance.length){
      
             cell.border = {

@@ -7,7 +7,9 @@
                 <div class="flex space-x-4">
                     <RouterLink to="/" class="text-gray-800">Attendance Generator</RouterLink>
                     <RouterLink to="/lmsform" class="text-gray-800">Training Calendar </RouterLink>
-                </div>
+                    <!-- <RouterLink to="/report" class="text-gray-800">Report </RouterLink>
+                -->
+                  </div>
             </div>
         </nav>
     </header>
