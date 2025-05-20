@@ -289,7 +289,7 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
               employee.Attendance = {};
             }
             employee.Duration[currentDate] =
-              filterEmployee && filterEmployee.DURATION !== undefined
+              filterEmployee && filterEmployee.DURATION !== undefined && filterEmployee.DURATION !== null
                 ? filterEmployee.DURATION
                 : "0s";
             employee.Attendance[currentDate] = "P";
@@ -314,16 +314,18 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
       console.log('prepare',finalAttendanceSheet)
       return finalAttendanceSheet;
     },
-    filterParticipants(data, delay = 30) {
+    filterParticipants(data, delay = 0) {
       
       console.log("filter",data)
       const filteredParticipants = data.filter((participant) => {
         const durationStr = participant.DURATION;
-        const components = durationStr.split(" ");
         let hours = 0;
         let minutes = 0;
         let seconds = 0;
         let totalMinutes = 0;
+        if(durationStr){
+        const components = durationStr.split(" ");
+      
         for (const component of components) {
           if (component.includes("h")) {
             hours = parseInt(component);
@@ -333,6 +335,7 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
             seconds = parseInt(component);
           }
         }
+      }
         totalMinutes = hours * 60 + minutes + seconds / 60;
         return totalMinutes > delay;
       });
