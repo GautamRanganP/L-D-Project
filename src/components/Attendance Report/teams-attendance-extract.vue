@@ -166,6 +166,8 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
     extractFromTeamsAttendance(dataArray,name) {
       let isEnable = false;
       let result = [];
+      let isCheck = false
+      let initial = true;
       for (let teams of dataArray) {
         let participant = {
           EMPID: null,
@@ -181,13 +183,18 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
           }
           if (teams[key] === null) isEnable = false;
           if (isEnable) {
+            if(initial){
+              isCheck = teams[key].length > 2
+            }
             console.log("key",key,teams[key])
             console.log("name",name)
             if(name.toLowerCase().includes("training") && name.toLowerCase().includes("invite")){
               console.log("true",teams[key])
               if(teams[key] && teams[key] !== "Name"){
+                if(!isCheck){
+
                           if (typeof teams[key] === "string"){
-                              participant.NAME = teams[key].split("\t")[0]
+                              participant.NAME = teams[key].split("\t")[0].replace(/[0-9/]/g, '');
                               participant.DATE = teams[key].split("\t")[1]
                               continue
                             }else{
@@ -199,12 +206,27 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
                               else 
                                   participant.EMPID = participant.NAME;
                               }
-          
+                            }
+                            else{
+                              if (typeof teams[key] === "string"){
+                                 participant.NAME = teams[key].replace(/[0-9/]/g, '')
+                              }
+                              else{
+                                participant.DURATION = teams[key][2]
+                                participant.EMAIL = teams[key][3]
+                                  if (teams[key][4] && teams[key][4].includes("@hexaware"))
+                                    participant.EMPID = Number(teams[key][4].replace(/\D/g, ""));
+                                  else 
+                                    participant.EMPID = participant.NAME;
+                              }
+                              }
+                              
+                            }
                 if(participant.NAME && participant.DURATION){ 
                   result.push(participant);
                 }
               }
-            }
+            
             else{
               console.log("false")
             if (
