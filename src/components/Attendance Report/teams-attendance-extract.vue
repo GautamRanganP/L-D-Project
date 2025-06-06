@@ -188,7 +188,8 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
             }
             console.log("key",key,teams[key])
             console.log("name",name)
-            if(name.toLowerCase().includes("training") && name.toLowerCase().includes("invite")){
+            if(true){
+              
               console.log("true",teams[key])
               if(teams[key] && teams[key] !== "Name"){
                 if(!isCheck){
