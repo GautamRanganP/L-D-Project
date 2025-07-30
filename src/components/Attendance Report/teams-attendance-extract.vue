@@ -199,7 +199,10 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
                               participant.DATE = teams[key].split("\t")[1]
                               continue
                             }else{
+                              console.log("stuck",teams[key][1])
+                              if(teams[key][1]){
                               let extractedData = teams[key][1].split("\t")
+
                               participant.DURATION = extractedData[1]
                               participant.EMAIL = extractedData[2]
                               if (extractedData[3] && extractedData[3].includes("@hexaware"))
@@ -207,6 +210,7 @@ console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((empl
                               else 
                                   participant.EMPID = participant.NAME;
                               }
+                            }
                             }
                             else{
                               if (typeof teams[key] === "string"){
