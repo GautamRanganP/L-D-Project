@@ -9,7 +9,7 @@
     <div style="padding: 20px 30px;display: flex;gap: 20px;flex-direction: column;" v-if="!exportReady">
     <div class="form-control">
       <label for="formAttendance">Teams Attendance</label>
-      <input type="file" id="formAttendance" multiple />
+      <input type="file" id="formAttendance" multiple required/>
     </div>
     <div class="form-control">
       <label for="">Have Nomination Sheet</label>
@@ -28,23 +28,6 @@
       <label for="nomination">Nominations</label>
       <input type="file" id="nomination" required />
     </div>
-    <div class="form-control">
-      <label for="dhr">DHR Report</label>
-      <input type="file" id="dhr"/>
-    </div>
-      <div class="form-control">
-      <label for="preassessment">Preassessment</label>
-      <input type="file" id="preassessment"/>
-    </div>
-      <div class="form-control">
-      <label for="postassessment">Postassessment</label>
-      <input type="file" id="postassessment"/>
-    </div>
-     <!-- <div class="form-control">
-      <label for="premanager">Pre Manager Feedback</label>
-      <input type="file" id="premanager"/>
-    </div> -->
-    
     <div class="form-control">
       <label for="formAttendance">Minimum Stay</label>
       <select v-model="minDurationStay">
@@ -99,8 +82,6 @@ export default {
       this.exportReady = false;
       this.dynamicNomination = [];
       this.finalAttendance = [];
-      this.finalAttendanceWithNomination = []
-      this.finalAttendancedifference = []
       this.trainingInformation = [];
       this.$refs.attendanceForm.reset();
       this.selectOption ='No';
@@ -144,10 +125,6 @@ export default {
             });
           }
         }
-        let DHRJson = []
-        let PreJson = []
-        let PostJson = []
-        let prefeedbackJson = []
         if(this.selectOption!=='No'){
           const nominationfile = e.target[3].files[0];
           const nominationSheet = await this.extractNomination(
@@ -158,37 +135,7 @@ export default {
             nominationSheet,
             trainingDetails
           );
-          if(e.target[4].files[0]){
-          const Dfile = e.target[4].files[0];
-          DHRJson = await this.DHRExtract(Dfile);
-          const prefile = e.target[5].files[0];
-          PreJson = await this.PreAssessment(prefile,DHRJson);
-          const postfile = e.target[6].files[0];
-          PostJson = await this.PostAssessment(postfile,DHRJson);
-          if(e.target[7].files[0]){
-          const prefeedback = e.target[7].files[0];
-          prefeedbackJson = await this.PreManager(prefeedback);
-          }
-          }
         }
-        else{
-          // const Dfile = e.target[3].files[0];
-          // DHRJson = await this.DHRExtract(Dfile);
-          if(e.target[4].files[0]){
-           const Dfile = e.target[3].files[0];
-           DHRJson = await this.DHRExtract(Dfile);
-            const prefile = e.target[4].files[0];
-            PreJson = await this.PreAssessment(prefile,DHRJson);
-            const postfile = e.target[5].files[0];
-            PostJson = await this.PostAssessment(postfile,DHRJson);
-           if(e.target[6].files[0]){  
-            const prefeedback = e.target[6].files[0];
-          prefeedbackJson = await this.PreManager(prefeedback);
-           }
-          
-          }
-        }
-        console.log(PreJson)
         setTimeout(()=>{
           const uniqueArray = this.setNominationSheet(trainingDetails);
           this.finalAttendance =  this.prepareFinalAttendance(
@@ -203,125 +150,13 @@ export default {
 
             console.log('finalAttendancedifference',this.finalAttendancedifference)
           }
-          
         this.trainingInformation = trainingDetails;
         this.exportReady = true;
         this.loading = false;       
 
 console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length, this.finalAttendancedifference.filter((employee)=>(((employee.PRESENTCOUNT === undefined ? 0 : employee.PRESENTCOUNT) / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length)
 
-console.log("final",this.finalAttendance)
-
-console.log("pre",PreJson)
-if(prefeedbackJson.length > 0){
-   if(this.finalAttendance.length === 0){
-    this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
-  const match = prefeedbackJson.find(item => item.EMP_ID === employee.EMPID);
-  if (match) {
-    return { ...employee, MANAGER_FEEDBACK: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
-})
-
-    this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
-  const match = prefeedbackJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, MANAGER_FEEDBACK: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
-})
-  }else{
-     this.finalAttendance = this.finalAttendance.map(employee => {
-  const match = prefeedbackJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, MANAGER_FEEDBACK: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
-});
-  }
-
-}
-
-
-if(PreJson.length>0){
-  if(this.finalAttendance.length === 0){
-    this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
-  if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-})
-
-    this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-})
-  }
-
-  this.finalAttendance = this.finalAttendance.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-});
-
-}
-
-if(PostJson.length>0){
-  if(this.finalAttendance.length === 0){
-    this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
-  if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-})
-
-    this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-})
-  }
-  this.finalAttendance = this.finalAttendance.map(employee => {
-  const match = PostJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, POSTASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, POSTASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-});
-
-}
-
-
-
-console.log("final",this.finalAttendance)
-
+        
         },2000)
         
       } catch (err) {
@@ -559,7 +394,7 @@ console.log("final",this.finalAttendance)
         finalAttendance = this.sortMixedArray(JSON.parse(JSON.stringify(this.finalAttendance)));
       }
       else{
-        finalAttendance = JSON.parse(JSON.stringify(this.finalAttendance))
+        finalAttendance = JSON.parse(JSON.stringify([...this.finalAttendanceWithNomination, ...this.finalAttendancedifference]))
         console.log('finalAttendanceWithNomination',this.finalAttendanceWithNomination)
         console.log('finalAttendancedifference',this.finalAttendancedifference)
         console.log('finalAttendance',finalAttendance)
@@ -574,18 +409,8 @@ console.log("final",this.finalAttendance)
       headers.push(
         { header: "No_of_Sessions", key: "session" },
         { header: "No_of_Days_Present", key: "days" },
-        { header: "Attendance in %", key: "attendance" },
-
+        { header: "Attendance in %", key: "attendance" }
       );
-      
-      if(finalAttendance[0].PREASSESSMENT_PERCENT)
-               headers.push(     { header: "Pre-Assessment Percentage", key: "Preassessment" })
-      if(finalAttendance[0].POSTASSESSMENT_PERCENT)
-               headers.push(      { header: "Post-Assessment Percentage", key: "Postassessment" })
-     
-     if(finalAttendance[0].MANAGER_FEEDBACK)
-         headers.push(      { header: "Pre-training Manager Feedback", key: "PretrainingManagersFeedback" })
-               
       worksheet.columns = headers;
       let excelDateLocate = [];
 
@@ -608,14 +433,6 @@ console.log("final",this.finalAttendance)
           ((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) +
             "%"
         );
-
-        if(employee.PREASSESSMENT_PERCENT)
-          row.push(employee.PREASSESSMENT_PERCENT);
-        if(employee.POSTASSESSMENT_PERCENT)
-        row.push(employee.POSTASSESSMENT_PERCENT);
-        if(employee.MANAGER_FEEDBACK)
-        row.push(employee.MANAGER_FEEDBACK)
-
         worksheet.addRow(row);
       });
 
@@ -632,28 +449,7 @@ console.log("final",this.finalAttendance)
         });
       }
 
-              if(finalAttendance[0].PREASSESSMENT_PERCENT){
-      worksheet.getColumn("Preassessment").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
-          cell.alignment = { horizontal: "center", vertical: "middle" };
-        }
-      });
-    }
-       if(finalAttendance[0].POSTASSESSMENT_PERCENT){
-      worksheet.getColumn("Postassessment").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
-          cell.alignment = { horizontal: "center", vertical: "middle" };
-        }
-      });
-    }
-        if(finalAttendance[0].MANAGER_FEEDBACK){
-      worksheet.getColumn("PretrainingManagersFeedback").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
-          cell.alignment = { horizontal: "center", vertical: "middle" };
-        }
-      });
-    }
-          worksheet.getColumn("session").eachCell((cell, rowNumber) => {
+      worksheet.getColumn("session").eachCell((cell, rowNumber) => {
         if (rowNumber !== 1) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
@@ -776,163 +572,6 @@ console.log("final",this.finalAttendance)
       downloadLink.click(); // Clean up by revoking the blob URL
       window.URL.revokeObjectURL(blobUrl);
       this.loading = false
-    },
-    async DHRExtract(file){
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(file.arrayBuffer());
-      const worksheet = workbook.worksheets[0];
-      let header = worksheet.getRow(1).values.slice(1)
-      console.log(header)
-      let data = [];
-      worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-        if (rowNumber > 1) {
-          data.push(row.values.slice(1));
-        }
-      });
-      let filtered = JSON.stringify(
-        data
-          .filter((obj) => {
-            return ![null, undefined, ""].includes(obj);
-          })
-          .filter((el) => {
-            return typeof el != "object" || Object.keys(el).length > 0;
-          })
-      );
-      let dataArray = JSON.parse(filtered);
-
-    const employees = [];
-      for (const item of dataArray) {
-        const employee = {
-          EMP_ID: item[0],
-          NAME: item[2],
-          EMAIL: item[39],
-          MANAGER_EMP_ID: item[35],
-          MANAGER_NAME: item[36],
-        };
-        if(item[39]){
-        employees.push(employee);
-        }
-      }
-      return employees;
-    },
-    async PreManager(file){
-const workbook = new ExcelJS.Workbook();
-const arrayBuffer = await file.arrayBuffer();
-const uint8Array = new Uint8Array(arrayBuffer);
-await workbook.xlsx.load(uint8Array);
-const worksheet = workbook.worksheets[0];
-      let header = worksheet.getRow(1).values.slice(1)
-      console.log(header)
-      let data = [];
-      worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-        if (rowNumber > 1) {
-          data.push(row.values.slice(1));
-        }
-      });
-      let filtered = JSON.stringify(
-        data
-          .filter((obj) => {
-            return ![null, undefined, ""].includes(obj);
-          })
-          .filter((el) => {
-            return typeof el != "object" || Object.keys(el).length > 0;
-          })
-      );
-      let dataArray = JSON.parse(filtered);
-
-    const employees = [];
-      for (const item of dataArray) {
-        const employee = {
-          EMP_ID: item[5],
-          MANAGER_FEEDBACK: item[6],
-        };
-        employees.push(employee);
-        
-      }
-      return employees;
-    },
-    
-     async PreAssessment(file,allemployee){
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(file.arrayBuffer());
-      const worksheet = workbook.worksheets[0];
-      let header = worksheet.getRow(1).values.slice(1)
-      console.log(header)
-      let data = [];
-      worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-        if (rowNumber > 1) {
-          data.push(row.values.slice(1));
-        }
-      });
-      let filtered = JSON.stringify(
-        data
-          .filter((obj) => {
-            return ![null, undefined, ""].includes(obj);
-          })
-          .filter((el) => {
-            return typeof el != "object" || Object.keys(el).length > 0;
-          })
-      );
-      let dataArray = JSON.parse(filtered);
-      console.log("allemployee",allemployee)
-      const employees = [];
-      for (const item of dataArray) {
-        const employeeObject = allemployee.find(emp => emp.EMAIL.toLowerCase() === item[4].toLowerCase());
-       if(employeeObject){
-        console.log("obj",employeeObject)
-       }
-        const employee = {
-          EMP_ID: employeeObject ? employeeObject.EMP_ID : Number(item[4].replace(/\D/g, "")),
-          NAME: item[3],
-          EMAIL: item[4],
-          Test_Score: item[10],
-          Candidate_Score: item[11],
-          Percentage: item[12]
-        };
-        employees.push(employee);
-      }
-      return employees;
-    },
-    async PostAssessment(file,allemployee){
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(file.arrayBuffer());
-      const worksheet = workbook.worksheets[0];
-      let header = worksheet.getRow(1).values.slice(1)
-      console.log(header)
-      let data = [];
-      worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-        if (rowNumber > 1) {
-          data.push(row.values.slice(1));
-        }
-      });
-      let filtered = JSON.stringify(
-        data
-          .filter((obj) => {
-            return ![null, undefined, ""].includes(obj);
-          })
-          .filter((el) => {
-            return typeof el != "object" || Object.keys(el).length > 0;
-          })
-      );
-      let dataArray = JSON.parse(filtered);
-      console.log("allemployee",allemployee)
-      const employees = [];
-      for (const item of dataArray) {
-        const employeeObject = allemployee.find(emp => emp.EMAIL.toLowerCase() === item[4].toLowerCase());
-       if(employeeObject){
-        console.log("obj",employeeObject)
-       }
-        const employee = {
-          EMP_ID: employeeObject ? employeeObject.EMP_ID : Number(item[4].replace(/\D/g, "")),
-          NAME: item[3],
-          EMAIL: item[4],
-          Test_Score: item[10],
-          Candidate_Score: item[11],
-          Percentage: item[12]
-        };
-        employees.push(employee);
-      }
-      return employees;
     },
     async extractNomination(file, sheetCount) {
       const workbook = new ExcelJS.Workbook();

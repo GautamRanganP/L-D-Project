@@ -207,7 +207,7 @@ const filteredData = computed(() =>
   allTrainings.value.filter(t =>
     (selectedCategory.value === 'All' || t.category === selectedCategory.value) &&
     (selectedTrainerType.value === 'All' || t.trainer === selectedTrainerType.value) &&
-    (selectedCountry.value === 'All' || t.country === selectedCountry.value) &&
+(selectedCountry.value === 'All' || t.country === selectedCountry.value) &&
     (selectedMonth.value === 'All' || t.month === selectedMonth.value)
   )
 )
@@ -234,7 +234,7 @@ allTrainings.value = jsonData.map(row => ({
       cost: parseFloat(row.cost),
       category: row.category,
       trainer: row.trainer,
-      country: row.country,
+country: row.country,
       skill: row.skill,
       awePoints: parseInt(row.awePoints) || 0
     }))
@@ -248,7 +248,6 @@ employeeData.value = employeeJson.map(row => ({
       awePoints: parseInt(row.awePoints) || 0
     }))
  
-    console.log("employeeData",employeeData)
     updateCharts()
   }
   reader.readAsArrayBuffer(file)
