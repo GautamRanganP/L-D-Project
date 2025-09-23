@@ -6,8 +6,8 @@
                 <a href="#" class="text-2xl font-bold text-gray-800"><img src="./assets/50.jpg" width="35" height="35"> </a>
                 <div class="flex space-x-4">
                     <RouterLink to="/" class="text-gray-800">Attendance Generator</RouterLink>
-                                        <RouterLink to="/prepost" class="text-gray-800">Attendance Generator With Pre Post </RouterLink>
-                    <RouterLink to="/lmsform" class="text-gray-800">Training Calendar </RouterLink>
+                    <RouterLink to="/prepost" class="text-gray-800">Effectiveness Report Generator</RouterLink>
+                    <RouterLink to="/lmsform" class="text-gray-800">Training Calendar</RouterLink>
                     <!-- <RouterLink to="/report" class="text-gray-800">Report </RouterLink>
                 -->
                   </div>

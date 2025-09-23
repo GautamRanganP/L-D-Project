@@ -5,60 +5,12 @@
     id="attendance-form"
     ref="attendanceForm"
   >
-    <h1 class="text-center font-bold" style="background-color: #F0E7D8;padding: 8px;font-size: 19px;">Attendance Report Generator</h1>
+    <h1 class="text-center font-bold" style="background-color: #F0E7D8;padding: 8px;font-size: 19px;">Effectiveness Report Generator</h1>
     <div style="padding: 20px 30px;display: flex;gap: 20px;flex-direction: column;" v-if="!exportReady">
-   
-      <!-- <div class="form-control">
-      <label for="">Have Attendance Report</label>
-      <div style="display: flex;gap: 20px;align-items: center;">
-      <div style="display: flex;gap: 20px;align-items: center;flex-direction: row-reverse;">
-        <label for="reportConfirmation1">Yes</label>
-        <input type="radio"   id="reportConfirmation1" value="Yes" v-model="selectOptionReport" name="reportConfirmation"/>
-      </div>
-      <div style="display: flex;gap: 20px;align-items: center;flex-direction: row-reverse;">
-        <label for="reportConfirmation2">No</label>
-        <input type="radio" id="reportConfirmation2" value="No" v-model="selectOptionReport" name="reportConfirmation"/>
-      </div>
-    </div>
-    </div> -->
-
-
-    <div class="form-control">
-      <label for="formAttendance">Teams Attendance</label>
-      <input type="file" id="formAttendance" multiple />
-    </div>
-
-    
-    <!-- <div class="form-control" v-if="selectOptionReport === 'No'">
-      <label for="formAttendance">Teams Attendance</label>
-      <input type="file" id="formAttendance" multiple />
-    </div>
-
-<div class="form-control" v-if="selectOptionReport === 'Yes'">
+    <div class="form-control" >
       <label for="formAttendance">Attendance Report</label>
       <input type="file" id="formAttendance" />
-    </div> -->
-
-
-
-    <div class="form-control">
-      <label for="">Have Nomination Sheet</label>
-      <div style="display: flex;gap: 20px;align-items: center;">
-      <div style="display: flex;gap: 20px;align-items: center;flex-direction: row-reverse;">
-        <label for="nominationConfirmation1">Yes</label>
-        <input type="radio"   id="nominationConfirmation1" value="Yes" v-model="selectOption" name="nominationConfirmation"/>
-      </div>
-      <div style="display: flex;gap: 20px;align-items: center;flex-direction: row-reverse;">
-        <label for="nominationConfirmation2">No</label>
-        <input type="radio" id="nominationConfirmation2" value="No" v-model="selectOption" name="nominationConfirmation"/>
-      </div>
     </div>
-    </div>
-    <div class="form-control" v-if="selectOption !== 'No'">
-      <label for="nomination">Nominations</label>
-      <input type="file" id="nomination" required />
-    </div>
-     
     <div class="form-control">
       <label for="dhr">DHR Report</label>
       <input type="file" id="dhr" @change="handleFileChange" :disabled="isLoading"/>
@@ -77,17 +29,6 @@
      <div class="form-control">
       <label for="premanager">Pre Manager Feedback</label>
       <input type="file" id="premanager"/>
-    </div>
-    
-    <div class="form-control">
-      <label for="formAttendance">Minimum Stay</label>
-      <select v-model="minDurationStay">
-        <option value="0">0 mins</option>
-        <option value="15">15 mins</option>
-        <option value="30">30 mins</option>
-        <option value="45">45 mins</option>
-        <option value="60">1 hour</option>
-      </select>
     </div>
   </div>
 <div class="extract-result" v-if="exportReady" style="padding: 20px;">
@@ -116,6 +57,7 @@ import moment from "moment";
 export default {
   data() {
     return {
+      trainingName:"default",
       finalAttendanceWithNomination:[],
       finalAttendancedifference:[],
       selectOption:'No',
@@ -170,169 +112,261 @@ export default {
     },
     async handleExcel(e) {
       this.loading = true;
-      const files = e.target[0].files;
-      const totalSheet = files.length;
-      const trainingDetails = {
-        trainingName: null,
-        trainingParticipant: [],
-        dateCount: totalSheet,
-      };
-      try {
-        for (let file of files) {
-          if (file) {
-            let copyFormat = file.name.replace(/ \(\d+\)/g, "");
-            const pattern =
-              /^(.*) - Attendance report (\d{1,2}-\d{1,2}-\d{2})\.csv$/;
-            const match = copyFormat.match(pattern);
-            if (match) {
-              if (!trainingDetails.trainingName)
-                trainingDetails.trainingName = match[1];
-            }
+      
+      // const files = e.target[0].files;
+      // const totalSheet = files.length;
+      // const trainingDetails = {
+      //   trainingName: null,
+      //   trainingParticipant: [],
+      //   dateCount: totalSheet,
+      // };
+//       if(this.selectOptionReport !== "Yes"){
+//         const totalSheet = files.length;
+//       const trainingDetails = {
+//         trainingName: null,
+//         trainingParticipant: [],
+//         dateCount: totalSheet,
+//       };
+//       try {
+//         for (let file of files) {
+//           if (file) {
+//             let copyFormat = file.name.replace(/ \(\d+\)/g, "");
+//             const pattern =
+//               /^(.*) - Attendance report (\d{1,2}-\d{1,2}-\d{2})\.csv$/;
+//             const match = copyFormat.match(pattern);
+//             if (match) {
+//               if (!trainingDetails.trainingName)
+//                 trainingDetails.trainingName = match[1];
+//             }
 
 
-            await Papa.parse(file, {
-              header: true,
-              dynamicTyping: true,
-              complete: (results) => {
-                console.log(results)
-                trainingDetails.trainingParticipant.push({
-                  date: match[2],
-                  participants: this.extractFromTeamsAttendance(results.data,trainingDetails.trainingName),
-                });
-                trainingDetails.trainingParticipant.sort((a, b) => new Date(a.date) - new Date(b.date));
-                console.log("training",trainingDetails,results)
-              },
-            });
-          }
-        }
-        let DHRJson = []
+//             await Papa.parse(file, {
+//               header: true,
+//               dynamicTyping: true,
+//               complete: (results) => {
+//                 console.log(results)
+//                 trainingDetails.trainingParticipant.push({
+//                   date: match[2],
+//                   participants: this.extractFromTeamsAttendance(results.data,trainingDetails.trainingName),
+//                 });
+//                 trainingDetails.trainingParticipant.sort((a, b) => new Date(a.date) - new Date(b.date));
+//                 console.log("training",trainingDetails,results)
+//               },
+//             });
+//           }
+//         }
+//         let DHRJson = []
+//         let PreJson = []
+//         let PostJson = []
+//         let prefeedbackJson = []
+//         if(this.selectOption!=='No'){
+//           const nominationfile = e.target[3].files[0];
+//           const nominationSheet = await this.extractNomination(
+//             nominationfile,
+//             totalSheet
+//           );
+//           this.finalAttendanceWithNomination =  this.prepareFinalAttendance(
+//             nominationSheet,
+//             trainingDetails
+//           );
+//           if(e.target[4].files[0]){
+//           // const Dfile = e.target[4].files[0];
+//           // DHRJson = await this.DHRExtract(Dfile);
+//           const prefile = e.target[5].files[0];
+//           PreJson = await this.PreAssessment(prefile,this.dhrData);
+//           const postfile = e.target[6].files[0];
+//           PostJson = await this.PostAssessment(postfile,this.dhrData);
+//           if(e.target[7].files[0]){
+//           const prefeedback = e.target[7].files[0];
+//           prefeedbackJson = await this.PreManager(prefeedback,this.dhrData);
+//           }
+//           }
+//         }
+//         else{
+//           // const Dfile = e.target[3].files[0];
+//           // DHRJson = await this.DHRExtract(Dfile);
+//           if(e.target[4].files[0]){
+//           //  const Dfile = e.target[3].files[0];
+//           //  DHRJson = await this.DHRExtract(Dfile);
+//             const prefile = e.target[4].files[0];
+//             PreJson = await this.PreAssessment(prefile,this.dhrData);
+//             const postfile = e.target[5].files[0];
+//             PostJson = await this.PostAssessment(postfile,this.dhrData);
+         
+          
+//           }
+//             if(e.target[6].files[0]){  
+//             const prefeedback = e.target[6].files[0];
+//           prefeedbackJson = await this.PreManager(prefeedback,this.dhrData);
+//            }
+//         }
+//         console.log(PreJson)
+//         setTimeout(()=>{
+//           const uniqueArray = this.setNominationSheet(trainingDetails);
+//           this.finalAttendance =  this.prepareFinalAttendance(
+//           uniqueArray,
+//           trainingDetails
+//         );
+//         if(this.selectOption !== 'No'){
+//           let attendancefull =JSON.parse(JSON.stringify(this.finalAttendance))
+//           this.finalAttendancedifference = attendancefull.filter(
+//           (obj1) => !this.finalAttendanceWithNomination.some((obj2) => obj2.EMPID == obj1.EMPID)  
+//           );
+
+//             console.log('finalAttendancedifference',this.finalAttendancedifference)
+//           }
+          
+//         this.trainingInformation = trainingDetails;
+//         this.exportReady = true;
+//         this.loading = false;       
+
+// console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length, this.finalAttendancedifference.filter((employee)=>(((employee.PRESENTCOUNT === undefined ? 0 : employee.PRESENTCOUNT) / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length)
+
+// console.log("final",this.finalAttendance)
+
+// console.log("pre",PreJson)
+// if(prefeedbackJson.length > 0){
+//    if(this.finalAttendance.length === 0){
+//     this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
+//   const match = prefeedbackJson.find(item => item.EMP_ID == employee.EMPID);
+//   if (match) {
+//     return { ...employee, MANAGER_FEEDBACK: match.MANAGER_FEEDBACK ? match.MANAGER_FEEDBACK : "NA" }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
+// })
+
+//     this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
+//   const match = prefeedbackJson.find(item => item.EMP_ID == employee.EMPID);
+//       // Test_Score: item[10],
+//       //     Candidate_Score: item[11],
+//       //     Percentage: item[12]
+//   if (match) {
+//     return { ...employee, MANAGER_FEEDBACK: match.MANAGER_FEEDBACK ? match.MANAGER_FEEDBACK : "NA" }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
+// })
+//   }else{
+//      this.finalAttendance = this.finalAttendance.map(employee => {
+//   const match = prefeedbackJson.find(item => item.EMP_ID === employee.EMPID);
+//       // Test_Score: item[10],
+//       //     Candidate_Score: item[11],
+//       //     Percentage: item[12]
+//   if (match) {
+//     return { ...employee, MANAGER_FEEDBACK: match.MANAGER_FEEDBACK ? match.MANAGER_FEEDBACK : "NA" }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
+// });
+//   }
+
+// }
+
+
+// if(PreJson.length>0){
+//   if(this.finalAttendance.length === 0){
+//     this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
+//   const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
+//   if (match) {
+//     return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+// })
+
+//     this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
+//   const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
+//       // Test_Score: item[10],
+//       //     Candidate_Score: item[11],
+//       //     Percentage: item[12]
+//   if (match) {
+//     return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+// })
+//   }
+
+//   this.finalAttendance = this.finalAttendance.map(employee => {
+//   const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
+//       // Test_Score: item[10],
+//       //     Candidate_Score: item[11],
+//       //     Percentage: item[12]
+//   if (match) {
+//     return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+// });
+
+// }
+
+// if(PostJson.length>0){
+//   if(this.finalAttendance.length === 0){
+//     this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
+//   const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
+//   if (match) {
+//     return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+// })
+
+//     this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
+//   const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
+//       // Test_Score: item[10],
+//       //     Candidate_Score: item[11],
+//       //     Percentage: item[12]
+//   if (match) {
+//     return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+// })
+//   }
+//   this.finalAttendance = this.finalAttendance.map(employee => {
+//   const match = PostJson.find(item => item.EMP_ID === employee.EMPID);
+//       // Test_Score: item[10],
+//       //     Candidate_Score: item[11],
+//       //     Percentage: item[12]
+//   if (match) {
+//     return { ...employee, POSTASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
+//   }
+//   return { ...employee, POSTASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+// });
+
+// }
+
+
+
+// console.log("final",this.finalAttendance)
+
+//         },2000)
+        
+        
+
+//       } catch (err) {
+//         console.error(err);
+//       }
+//     }
+//     else{
+      console.log(e)
+      const files = e.target[0].files[0];
+      const regex = /^(.+?)\s+[A-Za-z]{3,9}'\d{2}\s+Attendance Report$/i;
+      const match = files.name.match(regex);
+      this.trainingName = match ? match[1].trim() : files.name.replace(/\s+.*Attendance Report$/i, '').trim();
+      
+      try{
         let PreJson = []
         let PostJson = []
         let prefeedbackJson = []
-        if(this.selectOption!=='No'){
-          const nominationfile = e.target[3].files[0];
-          const nominationSheet = await this.extractNomination(
-            nominationfile,
-            totalSheet
-          );
-          this.finalAttendanceWithNomination =  this.prepareFinalAttendance(
-            nominationSheet,
-            trainingDetails
-          );
-          if(e.target[4].files[0]){
-          // const Dfile = e.target[4].files[0];
-          // DHRJson = await this.DHRExtract(Dfile);
-          const prefile = e.target[5].files[0];
-          PreJson = await this.PreAssessment(prefile,this.dhrData);
-          const postfile = e.target[6].files[0];
-          PostJson = await this.PostAssessment(postfile,this.dhrData);
-          if(e.target[7].files[0]){
-          const prefeedback = e.target[7].files[0];
-          prefeedbackJson = await this.PreManager(prefeedback,this.dhrData);
-          }
-          }
-        }
-        else{
-          // const Dfile = e.target[3].files[0];
-          // DHRJson = await this.DHRExtract(Dfile);
-          if(e.target[4].files[0]){
-          //  const Dfile = e.target[3].files[0];
-          //  DHRJson = await this.DHRExtract(Dfile);
-            const prefile = e.target[4].files[0];
+        this.finalAttendance = await this.handleFileUpload(files)
+         if(e.target[2].files[0]){
+            const prefile = e.target[2].files[0];
             PreJson = await this.PreAssessment(prefile,this.dhrData);
-            const postfile = e.target[5].files[0];
+            const postfile = e.target[3].files[0];
             PostJson = await this.PostAssessment(postfile,this.dhrData);
-         
-          
           }
-            if(e.target[6].files[0]){  
-            const prefeedback = e.target[6].files[0];
-          prefeedbackJson = await this.PreManager(prefeedback,this.dhrData);
+            if(e.target[4].files[0]){  
+            const prefeedback = e.target[4].files[0];
+            prefeedbackJson = await this.PreManager(prefeedback,this.dhrData);
            }
-        }
-        console.log(PreJson)
-        setTimeout(()=>{
-          const uniqueArray = this.setNominationSheet(trainingDetails);
-          this.finalAttendance =  this.prepareFinalAttendance(
-          uniqueArray,
-          trainingDetails
-        );
-        if(this.selectOption !== 'No'){
-          let attendancefull =JSON.parse(JSON.stringify(this.finalAttendance))
-          this.finalAttendancedifference = attendancefull.filter(
-          (obj1) => !this.finalAttendanceWithNomination.some((obj2) => obj2.EMPID == obj1.EMPID)  
-          );
-
-            console.log('finalAttendancedifference',this.finalAttendancedifference)
-          }
-          
-        this.trainingInformation = trainingDetails;
-        this.exportReady = true;
-        this.loading = false;       
-
-console.log("final",this.finalAttendanceWithNomination.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length, this.finalAttendancedifference.filter((employee)=>(((employee.PRESENTCOUNT === undefined ? 0 : employee.PRESENTCOUNT) / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length)
-
-console.log("final",this.finalAttendance)
-
-console.log("pre",PreJson)
-if(prefeedbackJson.length > 0){
-   if(this.finalAttendance.length === 0){
-    this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
-  const match = prefeedbackJson.find(item => item.EMP_ID == employee.EMPID);
-  if (match) {
-    return { ...employee, MANAGER_FEEDBACK: match.MANAGER_FEEDBACK ? match.MANAGER_FEEDBACK : "NA" }; // Add 'status' if there's a match
-  }
-  return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
-})
-
-    this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
-  const match = prefeedbackJson.find(item => item.EMP_ID == employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, MANAGER_FEEDBACK: match.MANAGER_FEEDBACK ? match.MANAGER_FEEDBACK : "NA" }; // Add 'status' if there's a match
-  }
-  return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
-})
-  }else{
-     this.finalAttendance = this.finalAttendance.map(employee => {
-  const match = prefeedbackJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, MANAGER_FEEDBACK: match.MANAGER_FEEDBACK ? match.MANAGER_FEEDBACK : "NA" }; // Add 'status' if there's a match
-  }
-  return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
-});
-  }
-
-}
 
 
 if(PreJson.length>0){
-  if(this.finalAttendance.length === 0){
-    this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
-  if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-})
-
-    this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-})
-  }
-
   this.finalAttendance = this.finalAttendance.map(employee => {
   const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
       // Test_Score: item[10],
@@ -346,27 +380,17 @@ if(PreJson.length>0){
 
 }
 
-if(PostJson.length>0){
-  if(this.finalAttendance.length === 0){
-    this.finalAttendanceWithNomination  =  this.finalAttendanceWithNomination.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
+if(PostJson.length>0){ 
+  this.finalAttendance = this.finalAttendance.map(employee => {
+  const match = PostJson.find(item => item.EMP_ID === employee.EMPID);
   if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
+    return { ...employee, POSTASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
   }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-})
+  return { ...employee, POSTASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+});
+}
 
-    this.finalAttendancedifference = this.finalAttendancedifference.map(employee => {
-  const match = PreJson.find(item => item.EMP_ID === employee.EMPID);
-      // Test_Score: item[10],
-      //     Candidate_Score: item[11],
-      //     Percentage: item[12]
-  if (match) {
-    return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
-  }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-})
-  }
+if(prefeedbackJson.length > 0){
   this.finalAttendance = this.finalAttendance.map(employee => {
   const match = PostJson.find(item => item.EMP_ID === employee.EMPID);
       // Test_Score: item[10],
@@ -376,20 +400,175 @@ if(PostJson.length>0){
     return { ...employee, POSTASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
   }
   return { ...employee, POSTASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
-});
+})
 
 }
 
+        this.exportReady = true;
+        this.loading = false;       
 
-
-console.log("final",this.finalAttendance)
-
-        },2000)
-        
-      } catch (err) {
-        console.error(err);
+console.log("Final Attendance",this.finalAttendance)
       }
+      catch(err){
+  console.log(err)
+      }
+    // }
     },
+    async handleFileUpload(file) {
+  if (!file) return []
+
+  const workbook = new ExcelJS.Workbook()
+  const reader = new FileReader()
+
+  return new Promise((resolve, reject) => {
+    reader.onerror = (err) => reject(err)
+
+    reader.onload = async (e) => {
+      try {
+        const buffer = e.target.result
+        await workbook.xlsx.load(buffer)
+
+        const worksheet = workbook.worksheets[0]
+        const headers = []
+        const results = []
+
+        worksheet.getRow(1).eachCell((cell, colNumber) => {
+          headers[colNumber] = cell.value
+        })
+
+        const isDateHeader = (h) => {
+          if (!h) return false
+          if (h instanceof Date) return true
+          const s = String(h)
+          return /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)/i.test(s)
+            || /GMT/.test(s)
+            || /\d{1,2}[-/]\w+[-/]\d{2,4}/.test(s)
+            || /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}$/.test(s)
+        }
+
+        const parseHeaderToDate = (h) => {
+          if (h instanceof Date) return h
+          const s = String(h).trim()
+          const parsed = new Date(s)
+          if (!isNaN(parsed)) return parsed
+
+          const m = s.match(/^(\d{1,2})[-/](\w+)[-/](\d{2,4})$/)
+          if (m) {
+            const day = parseInt(m[1], 10)
+            let mon = m[2]
+            let year = m[3]
+            const monthMap = {
+              jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,sept:8,oct:9,nov:10,dec:11
+            }
+            if (/^\d+$/.test(mon)) {
+              const mm = parseInt(mon,10) - 1
+              year = (year.length === 2) ? ('20' + year) : year
+              return new Date(parseInt(year,10), mm, day)
+            } else {
+              const k = mon.toLowerCase().slice(0,3)
+              if (monthMap.hasOwnProperty(k)) {
+                year = (year.length === 2) ? ('20' + year) : year
+                return new Date(parseInt(year,10), monthMap[k], day)
+              }
+            }
+          }
+          return new Date('invalid')
+        }
+
+        const formatKey = (dt) => {
+          if (!(dt instanceof Date) || isNaN(dt)) return String(dt)
+          const mo = dt.getMonth() + 1
+          const day = dt.getDate()
+          const yy = String(dt.getFullYear()).slice(-2)
+          return `${mo}-${day}-${yy}`
+        }
+
+        const findHeaderIndex = (regex) => {
+          for (let i = 1; i < headers.length; i++) {
+            const h = headers[i]
+            if (!h) continue
+            if (regex.test(String(h))) return i
+          }
+          return -1
+        }
+
+        const empCol = findHeaderIndex(/emp[_s]?id/i)
+        const nameCol = findHeaderIndex(/^name$/i)
+        const sessionsCol = findHeaderIndex(/no[_s]?of[_s]?sessions/i)
+
+        const dateCols = []
+        for (let i = 1; i < headers.length; i++) {
+          if (isDateHeader(headers[i])) dateCols.push(i)
+        }
+
+        worksheet.eachRow((row, rowNumber) => {
+          if (rowNumber === 1) return
+          const out = {
+            EMPID: null,
+            NAME: null,
+            SESSIONCOUNT: null,
+            PRESENTCOUNT: 0,
+            Duration: {},
+            Attendance: {}
+          }
+
+          if (empCol > 0) out.EMPID = row.getCell(empCol).value
+          if (nameCol > 0) {
+            let val = row.getCell(nameCol).value
+            if (typeof val === 'string') val = val.replace(/^"(.*)"$/, '$1')
+            out.NAME = val
+          }
+
+          if (sessionsCol > 0) {
+            const v = row.getCell(sessionsCol).value
+            out.SESSIONCOUNT = (typeof v === 'number') ? v : (v ? Number(v) : null)
+          }
+
+          if (!out.SESSIONCOUNT) out.SESSIONCOUNT = dateCols.length
+
+          dateCols.forEach((colIndex) => {
+            const hdr = headers[colIndex]
+            const dt = parseHeaderToDate(hdr)
+            const key = formatKey(dt)
+
+            let attendanceCell = row.getCell(colIndex).value
+            if (attendanceCell && typeof attendanceCell === 'object' && attendanceCell.hasOwnProperty('text')) {
+              attendanceCell = attendanceCell.text
+            }
+            if (attendanceCell && typeof attendanceCell !== 'string') attendanceCell = String(attendanceCell)
+
+            let duration = null
+            const nextHdr = headers[colIndex + 1]
+            if (nextHdr && /duration/i.test(String(nextHdr))) {
+              duration = row.getCell(colIndex + 1).value
+            } else {
+              const c1 = row.getCell(colIndex + 1).value
+              const c0 = row.getCell(colIndex - 1).value
+              if (c1 && /h|m|s/.test(String(c1))) duration = c1
+              else if (c0 && /h|m|s/.test(String(c0))) duration = c0
+            }
+
+            if (attendanceCell === undefined || attendanceCell === null) attendanceCell = ''
+            if (duration === undefined || duration === null) duration = ''
+
+            out.Attendance[key] = String(attendanceCell).trim()
+            out.Duration[key] = String(duration).trim()
+
+            if (String(out.Attendance[key]).toUpperCase() === 'P') out.PRESENTCOUNT++
+          })
+
+          results.push(out)
+        })
+
+        resolve(results)
+      } catch (err) {
+        reject(err)
+      }
+    }
+
+    reader.readAsArrayBuffer(file)
+  })
+},
     extractFromTeamsAttendance(dataArray,name) {
       let isEnable = false;
       let result = [];
@@ -612,9 +791,9 @@ console.log("final",this.finalAttendance)
         { header: "Emp_Id", key: "emp_id" },
         { header: "Name", key: "name" },
       ];
-      let data = JSON.parse(
-        JSON.stringify(this.trainingInformation.trainingParticipant)
-      );
+      // let data = JSON.parse(
+      //   JSON.stringify(this.trainingInformation.trainingParticipant)
+      // );
       let finalAttendance = []
        console.log('selectOption',this.selectOption)
       if(this.selectOption !== 'Yes'){
@@ -627,8 +806,10 @@ console.log("final",this.finalAttendance)
         console.log('finalAttendance',finalAttendance)
       }
       console.log('export',finalAttendance)
+
+      let data = Object.keys(this.finalAttendance[0].Attendance)
       data.forEach((date, index) => {
-        const dateString = date.date;
+        const dateString = date;
         const parsedDate = moment.utc(dateString).startOf("day").toDate();
         headers.push({ header: parsedDate, key: `date${index + 1}` });
         headers.push({ header: "Duration", key: `duration${index + 1}` });
@@ -666,8 +847,8 @@ console.log("final",this.finalAttendance)
           employee.NAME,
         ];
         data.forEach((date) => {
-          row.push(employee.Attendance[date.date]);
-          row.push(employee.Duration[date.date]);
+          row.push(employee.Attendance[date]);
+          row.push(employee.Duration[date]);
         });
         row.push(
           employee.SESSIONCOUNT,
@@ -864,7 +1045,7 @@ console.log("final",this.finalAttendance)
       downloadLink.href = blobUrl;
       downloadLink.setAttribute(
         "download",
-        `${this.trainingInformation.trainingName} Attendance Report.xlsx`
+        `${this.trainingName} Effectiveness Report.xlsx`
       ); // Simulate a click event on the download link
       downloadLink.click(); // Clean up by revoking the blob URL
       window.URL.revokeObjectURL(blobUrl);
