@@ -54,9 +54,12 @@
 import ExcelJS from "exceljs";
 import Papa from "papaparse";
 import moment from "moment";
+import { openDBPromise } from "../Utils/helper";
 export default {
   data() {
     return {
+      processedCount: 0,
+      totalCount: 0,
       trainingName:"default",
       finalAttendanceWithNomination:[],
       finalAttendancedifference:[],
@@ -76,35 +79,59 @@ export default {
   methods: {
     handleFileChange(event) {
       const file = event.target.files[0];
-      if (file) {
-        this.isLoading = true; // Show the loader
-        console.log("working",import.meta.url)
-        // Create a new worker instance
-        const worker = new Worker(new URL('../../workers/dataProcessor.js', import.meta.url), { type: 'module' });
- 
-        // Listen for messages from the worker
-        worker.onmessage = (event) => {
-          const { status, data } = event.data;
-          if (status === 'success') {
-            this.dhrData = data;
-            console.log('File processed successfully',data);
-          }
-                  console.log(status,event);
-          this.isLoading = false; // Hide the loader
-          worker.terminate();
-        };
- 
-        worker.onmessageerror = (e) => {
-  console.error('worker messageerror', e);
-};
+      if (!file) return;
 
-worker.onerror = (e) => {
-  console.error('worker error', e.message, e.filename, e.lineno, e.colno);
-};
-        // Send the file to the worker
-        worker.postMessage(file);
-      }
+      this.isLoading = true;
+      this.processedCount = 0;
+      this.totalCount = 0;
+
+      // create worker
+      const worker = new Worker('/public/dataProcessor.js', { type: 'module' });
+
+      worker.onmessage = (ev) => {
+        const msg = ev.data;
+        if (msg.status === 'progress') {
+          this.processedCount = msg.processed;
+          this.totalCount = msg.total || this.totalCount;
+        } else if (msg.status === 'success') {
+          this.processedCount = msg.count;
+          this.isLoading = false;
+          // do not assign huge data to reactive state
+          worker.terminate();
+          console.log('Import complete, stored to IndexedDB:', msg.count);
+        } else if (msg.status === 'error') {
+          console.error('Worker error:', msg.message);
+          this.isLoading = false;
+          worker.terminate();
+        }
+      };
+
+      worker.postMessage(file);
     },
+
+    // example: lookup by EMP_ID using IndexedDB
+    async findEmployeeById(empId) {
+      // check non-reactive cache first (see next snippet)
+      if (!empId) return null;
+      const cached = this.$_empMap && this.$_empMap.get(empId);
+      if (cached) return cached;
+
+      const db = await openDBPromise('dhrDB');
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(['employees'], 'readonly');
+        const store = tx.objectStore('employees');
+        const req = store.get(empId);
+        req.onsuccess = () => {
+          const result = req.result || null;
+          // optionally cache hot items
+          if (!this.$_empMap) this.$_empMap = new Map();
+          if (result) this.$_empMap.set(empId, result);
+          resolve(result);
+        };
+        req.onerror = () => reject(req.error);
+      });
+    },
+
     clearAttendance() {
       this.exportReady = false;
       this.dynamicNomination = [];
@@ -1032,7 +1059,12 @@ const worksheet = workbook.worksheets[0];
       return participants;
     },
   },
+   created() {
+    // non-reactive in-memory cache for extremely frequent lookups
+    this.$_empMap = new Map();
+  }
 };
+
 </script>
 
 <style>
