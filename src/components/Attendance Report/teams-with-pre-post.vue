@@ -15,7 +15,12 @@
       <label for="dhr">DHR Report</label>
       <input type="file" id="dhr" @change="handleFileChange" :disabled="isLoading"/>
       <div v-if="isLoading">
-        <p>Processing file, please wait...</p>
+         <div class="dots" role="status" aria-live="polite">
+      <div class="dot" aria-hidden="true"></div>
+      <div class="dot" aria-hidden="true"></div>
+      <div class="dot" aria-hidden="true"></div>
+      <div class="label">Processing file, please wait...</div>
+    </div>
       </div>
     </div>
       <div class="form-control">
@@ -38,7 +43,7 @@
 </div>
 
     <div class="form-button" v-if="!loading" style="padding-bottom: 20px;">
-      <button type="submit" v-if="finalAttendance.length === 0" :disabled="isLoading">Extract</button>
+      <button type="submit" v-if="finalAttendance.length === 0" :disabled="isLoading">{{isLoading ? "Please wait" : "Extract" }}</button>
       <button @click="clearAttendance" v-else>Resubmit</button>
       <button v-if="exportReady" @click="exportExcel">Export</button>
     </div>
@@ -136,8 +141,8 @@ worker.onerror = (e) => {
             const postfile = e.target[3].files[0];
             PostJson = await this.PostAssessment(postfile,this.dhrData);
           }
-            if(e.target[4].files[0]){  
-            const prefeedback = e.target[4].files[0];
+            if(e.target?.[4]?.files?.[0]){  
+            const prefeedback = e.target?.[4]?.files?.[0];
             prefeedbackJson = await this.PreManager(prefeedback,this.dhrData);
            }
 
@@ -165,11 +170,11 @@ if(PostJson.length>0){
 
 if(prefeedbackJson.length > 0){
   this.finalAttendance = this.finalAttendance.map(employee => {
-  const match = PostJson.find(item => item.EMP_ID === employee.EMPID);
-  if (match) {
-    return { ...employee, POSTASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
+  const match = prefeedbackJson.find(item => item.EMP_ID === employee.EMPID);
+  if (match && match.MANAGER_FEEDBACK) {
+    return { ...employee, MANAGER_FEEDBACK: match.MANAGER_FEEDBACK }; // Add 'status' if there's a match
   }
-  return { ...employee, POSTASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+  return { ...employee, MANAGER_FEEDBACK: "NA" }; // Add 'NA' if no match
 })
 
 }
@@ -624,6 +629,7 @@ console.log("Final Attendance",this.finalAttendance)
       
       let effectiveCount = 0
       let nonEffectiveCount = 0
+      let preAssessmentCount = 0
       let postAssessmentCount = 0
       finalAttendance.forEach((employee) => {
 
@@ -636,7 +642,10 @@ console.log("Final Attendance",this.finalAttendance)
                 sub = 0
               }
             }
-        
+            
+          if(employee.PREASSESSMENT_PERCENT !== "NA"){
+            preAssessmentCount++
+          }  
           if(employee.POSTASSESSMENT_PERCENT !== "NA"){
             postAssessmentCount++
           }  
@@ -655,25 +664,50 @@ const effectivenessPercent = totalCount > 0
   : 0;
       
 // javascript
-const newRow = worksheet.insertRow(1, [
-  "Total Effectiveness Percent",
-  null, // store as number (e.g. 0.45)
-  " ",
-  "Total Effective Count",
-  null,
-  " ",
-  "Total Non Effective Count",
-  null,
-  " ",
-  "Post Assessment Participant Count",
-  null
-]);
+// const newRow = worksheet.insertRow(1, [
+//   "Total Effectiveness Percent",
+//   null, // store as number (e.g. 0.45)
+//   " ",
+//   "Total Effective Count",
+//   null,
+//   " ",
+//   "Total Non Effective Count",
+//   null,
+//   " ",
+//   "Post Assessment Participant Count",
+//   null
+// ]);
+
+const row1 = [
+  'Total Effectiveness Percent',
+  null, // percent cell (will set below)
+  ' ',
+  'Pre Assessment Count',
+  preAssessmentCount
+];
+
+const row2 = [
+  'Total Effective Count',
+  effectiveCount,
+  ' ',
+  'Post Assessment Count',
+  postAssessmentCount
+];
+
+const row3 = [
+  'Total Non Effective Count',
+  nonEffectiveCount
+];
+
 
 
   console.log('effectiveCount:', effectiveCount);
 console.log('nonEffectiveCount:', nonEffectiveCount);
 console.log('effectivenessPercent:', effectivenessPercent + '%');
-   
+
+worksheet.insertRow(1, row3); // insert bottom-most first to preserve order at top
+worksheet.insertRow(1, row2);
+worksheet.insertRow(1, row1);
 
      
       finalAttendance.forEach((employee) => {
@@ -755,19 +789,19 @@ console.log('effectivenessPercent:', effectivenessPercent + '%');
 
               if(finalAttendance[0].PREASSESSMENT_PERCENT){
       worksheet.getColumn("Preassessment").eachCell((cell, rowNumber) => {
-            if (rowNumber !== 1 && rowNumber !== 2) {
+            if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
     }
        if(finalAttendance[0].POSTASSESSMENT_PERCENT){
       worksheet.getColumn("Postassessment").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1 && rowNumber !== 2) {
+         if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
            worksheet.getColumn("Delta").eachCell((cell, rowNumber) => {
-            if (rowNumber !== 1 && rowNumber !== 2) {
+             if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
@@ -775,23 +809,23 @@ console.log('effectivenessPercent:', effectivenessPercent + '%');
     }
         if(finalAttendance[0].MANAGER_FEEDBACK){
       worksheet.getColumn("PretrainingManagersFeedback").eachCell((cell, rowNumber) => {
-            if (rowNumber !== 1 && rowNumber !== 2) {
+           if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
     }
           worksheet.getColumn("session").eachCell((cell, rowNumber) => {
-     if (rowNumber !== 1 && rowNumber !== 2) {
+      if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
       worksheet.getColumn("emp_id").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1 && rowNumber !== 2) {
+ if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
           cell.alignment = { horizontal: "left", vertical: "middle" };
         }
       });
       worksheet.getColumn("days").eachCell((cell, rowNumber) => {
-          if (rowNumber !== 1 && rowNumber !== 2) {
+       if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
           if (excelDateLocate.length > 1) {
             cell.value = {
               formula: `COUNTIFS(${excelDateLocate[0] + rowNumber}:${
@@ -812,7 +846,7 @@ console.log('effectivenessPercent:', effectivenessPercent + '%');
       let excelTotalDays = worksheet.getColumn("session").letter;
       let excelDaysPresent = worksheet.getColumn("days").letter;
       worksheet.getColumn("attendance").eachCell((cell, rowNumber) => {
-       if (rowNumber !== 1 && rowNumber !== 2) {
+       if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4) {
           cell.value = {
             formula: `ROUND(${excelDaysPresent + rowNumber}/${
               excelTotalDays + rowNumber
@@ -836,7 +870,7 @@ console.log('effectivenessPercent:', effectivenessPercent + '%');
         column.width = maxLength < 15 ? 15 : maxLength;
       });
 
-      const headerRow = worksheet.getRow(2);
+      const headerRow = worksheet.getRow(4);
       headerRow.eachCell((cell, colNumber) => {
         cell.border = {
           top: { style: "thin", color: { argb: "000000" } },
@@ -850,7 +884,7 @@ console.log('effectivenessPercent:', effectivenessPercent + '%');
           fgColor: { argb: "B7D1F1" },
         };
       });
-      const dataRows = worksheet.getRows(3, finalAttendance.length);
+      const dataRows = worksheet.getRows(5, finalAttendance.length);
       console.log('col',this.finalAttendanceWithNomination.length,finalAttendance.length,this.finalAttendancedifference.length)
       dataRows.forEach((row,rowNumber) => {
         row.eachCell((cell, colNumber) => {
@@ -890,64 +924,79 @@ console.log('effectivenessPercent:', effectivenessPercent + '%');
       });
 
 
-const pctCell  = newRow.getCell(2);
-pctCell.value  = effectivenessPercent / 100; // convert to 0.2683 for Excel
-pctCell.numFmt = '0.00%';
-      
-
-const effectiveCell = newRow.getCell(5);
-effectiveCell.value = Number(effectiveCount) || 0;
-effectiveCell.numFmt = '#,##0';
-effectiveCell.alignment = { horizontal: 'right' };
-
-// Non-effective count (col 8) — same formatting
-const nonEffCell = newRow.getCell(8);
-nonEffCell.value = Number(nonEffectiveCount) || 0;
-nonEffCell.numFmt = '#,##0';
-nonEffCell.alignment = { horizontal: 'right' };
-
-// Post-assessment count (col 11) — same formatting
-const postCell = newRow.getCell(11);
-postCell.value = Number(postAssessmentCount) || 0;
-postCell.numFmt = '#,##0';
-postCell.alignment = { horizontal: 'right' };
-
-
-const styleBorder = {
+      const styleBorder = {
   top:    { style: 'thin', color: { argb: 'FF000000' } },
   left:   { style: 'thin', color: { argb: 'FF000000' } },
   bottom: { style: 'thin', color: { argb: 'FF000000' } },
   right:  { style: 'thin', color: { argb: 'FF000000' } },
 };
 
-const labelFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDDEBF7' } }; // light blue for labels
-const valueFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } }; // light yellow for values
+const labelFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDDEBF7' } }; // label background
+const valueFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } }; // value background
 
-// get label cells (cells before the values) and value cells
-const labelPctCell = newRow.getCell(1);   // "Total Effectiveness Percent" label
-const labelEffCell = newRow.getCell(4);   // "Total Effective Count" label
-const labelNonEff = newRow.getCell(7);    // "Total Non Effective Count" label
-const labelPost = newRow.getCell(10);     // "Post Assessment Participant Count" label
+const rowsToStyle = [1, 2, 3];
+rowsToStyle.forEach(rNum => {
+  const r = worksheet.getRow(rNum);
 
-// apply fill + border to labels
-[labelPctCell, labelEffCell, labelNonEff, labelPost].forEach(cell => {
-  cell.fill = labelFill;
-  cell.border = styleBorder;
-  cell.alignment = { vertical: 'middle', horizontal: 'left' };
+  // style label cell in column 1 if present
+  const labelCell = r.getCell(1);
+  if (labelCell.value !== undefined && labelCell.value !== null && String(labelCell.value).trim() !== '') {
+    labelCell.fill = labelFill;
+    labelCell.border = styleBorder;
+    labelCell.alignment = { vertical: 'middle', horizontal: 'left' };
+    labelCell.font = { name: 'Calibri', size: 11, bold: true };
+  }
+
+  // style value cell in column 2 if present
+  const valueCell = r.getCell(2);
+  if (valueCell.value !== undefined && valueCell.value !== null && String(valueCell.value).trim() !== '') {
+    valueCell.fill = valueFill;
+    valueCell.border = styleBorder;
+    valueCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    valueCell.font = { name: 'Calibri', size: 11 };
+  }
+
+  // style the right-side label (column 4) and its value (column 5) when present
+  const rightLabel = r.getCell(4);
+  if (rightLabel.value !== undefined && rightLabel.value !== null && String(rightLabel.value).trim() !== '') {
+    rightLabel.fill = labelFill;
+    rightLabel.border = styleBorder;
+    rightLabel.alignment = { vertical: 'middle', horizontal: 'left' };
+    rightLabel.font = { name: 'Calibri', size: 11, bold: true };
+  }
+
+  const rightValue = r.getCell(5);
+  if (rightValue.value !== undefined && rightValue.value !== null && String(rightValue.value).trim() !== '') {
+    rightValue.fill = valueFill;
+    rightValue.border = styleBorder;
+    rightValue.alignment = { vertical: 'middle', horizontal: 'center' };
+    rightValue.font = { name: 'Calibri', size: 11 };
+  }
 });
 
-// apply fill + border + existing formatting to value cells
-[pctCell, effectiveCell, nonEffCell, postCell].forEach(cell => {
-  cell.fill = valueFill;
-  cell.border = styleBorder;
-  // keep previously set numFmt / alignment or override as needed:
-  // cell.numFmt = cell.numFmt || '#,##0';
-  // cell.alignment = cell.alignment || { horizontal: 'right' };
-});
+// finally set the numeric formats explicitly for the specific cells:
+// percent cell (row 1, col 2)
+const pctCell = worksheet.getRow(1).getCell(2);
+pctCell.value = effectivenessPercent / 100; // already decimal like 0.2683
+pctCell.numFmt = '0.00%';
+pctCell.fill = valueFill;
+pctCell.border = styleBorder;
+pctCell.alignment = { horizontal: 'center' };
 
-// If using a streaming writer, commit the row
-if (typeof newRow.commit === 'function') newRow.commit();
+// integers with thousand separators (rows 2 and 3 col 2, and row 1/2 col 5)
+worksheet.getRow(2).getCell(2).value = Number(effectiveCount) || 0;
+worksheet.getRow(2).getCell(2).numFmt = '#,##0';
 
+worksheet.getRow(3).getCell(2).value = Number(nonEffectiveCount) || 0;
+worksheet.getRow(3).getCell(2).numFmt = '#,##0';
+
+worksheet.getRow(1).getCell(5).value = Number(preAssessmentCount) || 0;
+worksheet.getRow(1).getCell(5).numFmt = '#,##0';
+worksheet.getRow(2).getCell(5).value = Number(postAssessmentCount) || 0;
+worksheet.getRow(2).getCell(5).numFmt = '#,##0';
+
+// commit rows if using streaming writer or to be safe
+[1,2,3].forEach(i => { const r = worksheet.getRow(i); if (typeof r.commit === 'function') r.commit(); });
       const blob = await workbook.xlsx.writeBuffer();
       // Create a blob URL
       const blobUrl = window.URL.createObjectURL(
@@ -1165,6 +1214,20 @@ const worksheet = workbook.worksheets[0];
 </script>
 
 <style>
+    .dots {
+    display:inline-flex; gap:6px; align-items:center; font-family:system-ui,Segoe UI,Roboto;
+  }
+  .dot {
+    width:10px; height:10px; background:#2b8aef; border-radius:50%;
+    transform:translateY(0);
+    animation:jump 1s ease-in-out infinite;
+  }
+  .dot:nth-child(2) { animation-delay:0.15s; }
+  .dot:nth-child(3) { animation-delay:0.3s; }
+  @keyframes jump {
+    0%,100% { transform:translateY(0); opacity:0.9;}
+    50% { transform:translateY(-8px); opacity:1;}
+  }
 #attendance-form {
   font-weight: 600;
 }
