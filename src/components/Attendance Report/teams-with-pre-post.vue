@@ -577,6 +577,13 @@ console.log("Final Attendance",this.finalAttendance)
       }
       console.log('export',finalAttendance)
 
+
+
+
+
+
+
+
       let data = Object.keys(this.finalAttendance[0].Attendance)
       data.forEach((date, index) => {
         const dateString = date;
@@ -600,7 +607,7 @@ console.log("Final Attendance",this.finalAttendance)
      if(finalAttendance[0].PREASSESSMENT_PERCENT && finalAttendance[0].POSTASSESSMENT_PERCENT){
          headers.push({ header: "Delta", key: "Delta" })
          headers.push({ header: "Effectiveness", key: "Effectiveness" })
-         headers.push({ header: "Overall Training Completion", key: "Overall Training Completion" })
+         headers.push({ header: "Overall Training Completion (Attendance >= 50% & Post Assessment >= 60%)", key: "Overall Training Completion" })
       }
 
         
@@ -612,6 +619,63 @@ console.log("Final Attendance",this.finalAttendance)
         worksheet.getColumn(`date${i + 1}`).numFmt = "dd-mmm-yy";
         excelDateLocate.push(worksheet.getColumn(`date${i + 1}`).letter);
       }
+
+
+      
+      let effectiveCount = 0
+      let nonEffectiveCount = 0
+      let postAssessmentCount = 0
+      finalAttendance.forEach((employee) => {
+
+         let sub 
+            if(employee.PREASSESSMENT_PERCENT && employee.POSTASSESSMENT_PERCENT){
+              if(employee.PREASSESSMENT_PERCENT !== "NA" && employee.POSTASSESSMENT_PERCENT !== "NA" ){
+                sub = Number(employee.POSTASSESSMENT_PERCENT) - Number(employee.PREASSESSMENT_PERCENT)
+              }
+              else{
+                sub = 0
+              }
+            }
+        
+          if(employee.POSTASSESSMENT_PERCENT !== "NA"){
+            postAssessmentCount++
+          }  
+          if(sub > 0 || employee.POSTASSESSMENT_PERCENT == 100 ){
+            effectiveCount++
+          }
+          else{
+            nonEffectiveCount++
+          }
+      })
+
+  
+      const totalCount = finalAttendance.length;
+const effectivenessPercent = totalCount > 0
+  ? Number(((effectiveCount / totalCount) * 100).toFixed(2))
+  : 0;
+      
+// javascript
+const newRow = worksheet.insertRow(1, [
+  "Total Effectiveness Percent",
+  null, // store as number (e.g. 0.45)
+  " ",
+  "Total Effective Count",
+  null,
+  " ",
+  "Total Non Effective Count",
+  null,
+  " ",
+  "Post Assessment Participant Count",
+  null
+]);
+
+
+  console.log('effectiveCount:', effectiveCount);
+console.log('nonEffectiveCount:', nonEffectiveCount);
+console.log('effectivenessPercent:', effectivenessPercent + '%');
+   
+
+     
       finalAttendance.forEach((employee) => {
         const row = [
           employee.EMPID ? employee.EMPID : "",
@@ -656,10 +720,16 @@ console.log("Final Attendance",this.finalAttendance)
               }
             }
              
-          if(sub > 0 || employee.POSTASSESSMENT_PERCENT == 100 )
+            
+          if(sub > 0 || employee.POSTASSESSMENT_PERCENT == 100 ){
             row.push("Training was Effective")
-          else
+        
+          }
+          else{
             row.push("Training Not Effective")
+          
+          }
+
 
 
           if( ((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50 && typeof(employee.POSTASSESSMENT_PERCENT) !== "string" && employee.POSTASSESSMENT_PERCENT >= 60)
@@ -685,19 +755,19 @@ console.log("Final Attendance",this.finalAttendance)
 
               if(finalAttendance[0].PREASSESSMENT_PERCENT){
       worksheet.getColumn("Preassessment").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
+            if (rowNumber !== 1 && rowNumber !== 2) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
     }
        if(finalAttendance[0].POSTASSESSMENT_PERCENT){
       worksheet.getColumn("Postassessment").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
+        if (rowNumber !== 1 && rowNumber !== 2) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
            worksheet.getColumn("Delta").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
+            if (rowNumber !== 1 && rowNumber !== 2) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
@@ -705,23 +775,23 @@ console.log("Final Attendance",this.finalAttendance)
     }
         if(finalAttendance[0].MANAGER_FEEDBACK){
       worksheet.getColumn("PretrainingManagersFeedback").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
+            if (rowNumber !== 1 && rowNumber !== 2) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
     }
           worksheet.getColumn("session").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
+     if (rowNumber !== 1 && rowNumber !== 2) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
       worksheet.getColumn("emp_id").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
+        if (rowNumber !== 1 && rowNumber !== 2) {
           cell.alignment = { horizontal: "left", vertical: "middle" };
         }
       });
       worksheet.getColumn("days").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
+          if (rowNumber !== 1 && rowNumber !== 2) {
           if (excelDateLocate.length > 1) {
             cell.value = {
               formula: `COUNTIFS(${excelDateLocate[0] + rowNumber}:${
@@ -742,7 +812,7 @@ console.log("Final Attendance",this.finalAttendance)
       let excelTotalDays = worksheet.getColumn("session").letter;
       let excelDaysPresent = worksheet.getColumn("days").letter;
       worksheet.getColumn("attendance").eachCell((cell, rowNumber) => {
-        if (rowNumber !== 1) {
+       if (rowNumber !== 1 && rowNumber !== 2) {
           cell.value = {
             formula: `ROUND(${excelDaysPresent + rowNumber}/${
               excelTotalDays + rowNumber
@@ -766,7 +836,7 @@ console.log("Final Attendance",this.finalAttendance)
         column.width = maxLength < 15 ? 15 : maxLength;
       });
 
-      const headerRow = worksheet.getRow(1);
+      const headerRow = worksheet.getRow(2);
       headerRow.eachCell((cell, colNumber) => {
         cell.border = {
           top: { style: "thin", color: { argb: "000000" } },
@@ -780,7 +850,7 @@ console.log("Final Attendance",this.finalAttendance)
           fgColor: { argb: "B7D1F1" },
         };
       });
-      const dataRows = worksheet.getRows(2, finalAttendance.length);
+      const dataRows = worksheet.getRows(3, finalAttendance.length);
       console.log('col',this.finalAttendanceWithNomination.length,finalAttendance.length,this.finalAttendancedifference.length)
       dataRows.forEach((row,rowNumber) => {
         row.eachCell((cell, colNumber) => {
@@ -818,6 +888,65 @@ console.log("Final Attendance",this.finalAttendance)
           },
         ],
       });
+
+
+const pctCell  = newRow.getCell(2);
+pctCell.value  = effectivenessPercent / 100; // convert to 0.2683 for Excel
+pctCell.numFmt = '0.00%';
+      
+
+const effectiveCell = newRow.getCell(5);
+effectiveCell.value = Number(effectiveCount) || 0;
+effectiveCell.numFmt = '#,##0';
+effectiveCell.alignment = { horizontal: 'right' };
+
+// Non-effective count (col 8) — same formatting
+const nonEffCell = newRow.getCell(8);
+nonEffCell.value = Number(nonEffectiveCount) || 0;
+nonEffCell.numFmt = '#,##0';
+nonEffCell.alignment = { horizontal: 'right' };
+
+// Post-assessment count (col 11) — same formatting
+const postCell = newRow.getCell(11);
+postCell.value = Number(postAssessmentCount) || 0;
+postCell.numFmt = '#,##0';
+postCell.alignment = { horizontal: 'right' };
+
+
+const styleBorder = {
+  top:    { style: 'thin', color: { argb: 'FF000000' } },
+  left:   { style: 'thin', color: { argb: 'FF000000' } },
+  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+  right:  { style: 'thin', color: { argb: 'FF000000' } },
+};
+
+const labelFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDDEBF7' } }; // light blue for labels
+const valueFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } }; // light yellow for values
+
+// get label cells (cells before the values) and value cells
+const labelPctCell = newRow.getCell(1);   // "Total Effectiveness Percent" label
+const labelEffCell = newRow.getCell(4);   // "Total Effective Count" label
+const labelNonEff = newRow.getCell(7);    // "Total Non Effective Count" label
+const labelPost = newRow.getCell(10);     // "Post Assessment Participant Count" label
+
+// apply fill + border to labels
+[labelPctCell, labelEffCell, labelNonEff, labelPost].forEach(cell => {
+  cell.fill = labelFill;
+  cell.border = styleBorder;
+  cell.alignment = { vertical: 'middle', horizontal: 'left' };
+});
+
+// apply fill + border + existing formatting to value cells
+[pctCell, effectiveCell, nonEffCell, postCell].forEach(cell => {
+  cell.fill = valueFill;
+  cell.border = styleBorder;
+  // keep previously set numFmt / alignment or override as needed:
+  // cell.numFmt = cell.numFmt || '#,##0';
+  // cell.alignment = cell.alignment || { horizontal: 'right' };
+});
+
+// If using a streaming writer, commit the row
+if (typeof newRow.commit === 'function') newRow.commit();
 
       const blob = await workbook.xlsx.writeBuffer();
       // Create a blob URL
