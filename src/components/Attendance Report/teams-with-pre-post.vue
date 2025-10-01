@@ -35,17 +35,22 @@
       <label for="premanager">Pre Manager Feedback</label>
       <input type="file" id="premanager"/>
     </div>
+    <div class="form-control" >
+      <label for="trainingCode">Training Class Code</label>
+      <input v-model="trainingCode" type="text" id="trainingCode" />
+    </div>
   </div>
 <div class="extract-result" v-if="exportReady" style="padding: 20px;">
   <p><span style="min-width: 150px;display:inline-block;">Total Nomination </span>: {{ selectOption === 'Yes' ? finalAttendanceWithNomination.length + finalAttendancedifference.length : finalAttendance.length }}</p> 
   <p><span style="min-width: 150px;display:inline-block;">Attended </span>: {{selectOption === 'Yes' ? finalAttendanceWithNomination.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50).length + finalAttendancedifference.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50).length : finalAttendance.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) >= 50).length }} </p>
   <p><span style="min-width: 150px;display:inline-block;">Not Attended </span>: {{selectOption === 'Yes' ? finalAttendanceWithNomination.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length + finalAttendancedifference.filter((employee)=>(((employee.PRESENTCOUNT === undefined ? 0 : employee.PRESENTCOUNT) / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length : finalAttendance.filter((employee)=>((employee.PRESENTCOUNT / employee.SESSIONCOUNT) * 100).toFixed(0) < 50).length }} </p>
+  <!-- <input v-model="trainingCode" type="text" /> -->
 </div>
 
     <div class="form-button" v-if="!loading" style="padding-bottom: 20px;">
       <button type="submit" v-if="finalAttendance.length === 0" :disabled="isLoading">{{isLoading ? "Please wait" : "Extract" }}</button>
       <button @click="clearAttendance" v-else>Resubmit</button>
-      <button v-if="exportReady" @click="exportExcel">Export</button>
+      <button v-if="exportReady" @click="exportExcel">Save & Export</button>
     </div>
     <div style="padding-bottom: 20px;" v-else >
       <p>Loading...</p>
@@ -59,9 +64,11 @@
 import ExcelJS from "exceljs";
 import Papa from "papaparse";
 import moment from "moment";
+import { getToken } from "../../services/auth";
 export default {
   data() {
     return {
+      trainingCode:"",
       trainingName:"default",
       finalAttendanceWithNomination:[],
       finalAttendancedifference:[],
@@ -122,14 +129,29 @@ worker.onerror = (e) => {
       this.minDurationStay = 0;
       
     },
-    async handleExcel(e) {
+ async handleExcel(e) {
       this.loading = true;
       console.log(e)
       const files = e.target[0].files[0];
+       const attendanceFile = e.target[0]?.files?.[0];
+  if (!attendanceFile) {
+    this.loading = false;
+    alert('Attendance file is required.');
+    return;
+  }
       const regex = /^(?:.*?-\s*)?(.*?)\s+Attendance\s+Report\b.*$/i;
       const match = files.name.match(regex);
       this.trainingName = match ? match[1].trim() : files.name.replace(/\s+Attendance\s+Report.*$/i, '').replace(/.*?-\s*/,'').trim();
     
+     
+
+
+  // Validate mandatory files: preassessment (index 2), postassessment (index 3), pre-manager feedback (index 4)
+  if (!e.target?.[2]?.files?.[0] || !e.target?.[3]?.files?.[0]) {
+    this.loading = false;
+    alert('Preassessment, Postassessment are mandatory.');
+    return;
+  }
       try{
         let PreJson = []
         let PostJson = []
@@ -995,6 +1017,28 @@ worksheet.getRow(1).getCell(5).numFmt = '#,##0';
 worksheet.getRow(2).getCell(5).value = Number(postAssessmentCount) || 0;
 worksheet.getRow(2).getCell(5).numFmt = '#,##0';
 
+
+const token = getToken()
+const res = await fetch('https://training-backend-topaz.vercel.app/api/trainings', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  },
+  body: JSON.stringify({
+    trainingCode: this.trainingCode.trim(),
+    trainingEffectivenessPercent: Number(effectivenessPercent)
+  })
+})
+
+if (res.ok && res.status === 201) {
+  const data = await res.json()
+  // handle success
+} else {
+  const errBody = await res.json().catch(() => ({}))
+  // use errBody.message or status to show error
+}
+
 // commit rows if using streaming writer or to be safe
 [1,2,3].forEach(i => { const r = worksheet.getRow(i); if (typeof r.commit === 'function') r.commit(); });
       const blob = await workbook.xlsx.writeBuffer();
@@ -1245,6 +1289,7 @@ const worksheet = workbook.worksheets[0];
   justify-content: center;
 }
 #attendance-form input[type="file"],
+#attendance-form input[type="text"],
 #attendance-form select {
   /* background-color: black; */
   /* background-color: #AB9B96; */
