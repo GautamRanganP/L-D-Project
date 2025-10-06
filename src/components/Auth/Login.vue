@@ -1,4 +1,3 @@
-// javascript
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -7,11 +6,13 @@ import { login as apiLogin, setToken, setUser } from '../../services/auth.js'
 const email = ref('')
 const password = ref('')
 const error = ref('')
+const loading = ref(false)
 const router = useRouter()
 const route = useRoute()
 
 async function submit() {
   error.value = ''
+  loading.value = true
   try {
     const res = await apiLogin(email.value, password.value)
     setToken(res.token)
@@ -20,6 +21,8 @@ async function submit() {
     router.replace(redirect)
   } catch (err) {
     error.value = err?.response?.data?.message || err?.message || 'Login failed'
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -60,35 +63,23 @@ async function submit() {
             {{ error }}
           </div>
 
-          <!-- <div class="flex items-center justify-between mb-4">
-            <label class="flex items-center space-x-2 text-sm text-gray-600">
-              <input type="checkbox" v-model="remember" class="form-checkbox h-4 w-4" />
-              <span>Remember me</span>
-            </label>
-
-            <RouterLink to="/forgot-password" class="text-sm text-indigo-600 hover:underline">Forgot?</RouterLink>
-          </div> -->
-
           <div class="flex items-center gap-3">
             <button
               :disabled="loading"
               type="submit"
               class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-60"
+              :aria-busy="loading"
             >
-              <span v-if="!loading">Login</span>
-              <span v-else class="flex items-center gap-2">
-                <span class="spinner" aria-hidden="true"></span>
-                Signing in...
-              </span>
-            </button>
+              <template v-if="!loading">Login</template>
 
-            <!-- <button
-              type="button"
-              @click="goHome"
-              class="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button> -->
+              <template v-else>
+                <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                Signing in...
+              </template>
+            </button>
           </div>
         </form>
       </div>

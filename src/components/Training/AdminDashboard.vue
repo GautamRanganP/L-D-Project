@@ -4,14 +4,21 @@
       <h2 class="text-2xl font-semibold">All Trainings (Admin)</h2>
 
       <div class="flex items-center gap-3">
-        <input
+        <select
           v-model="ownerIdFilter"
-          placeholder="Filter by ownerId"
-          class="px-3 py-2 border rounded"
-        />
+          @change="onOwnerChange"
+          class="px-3 py-2 border rounded bg-white"
+        >
+          <option value="">All owners</option>
+          <option v-for="o in owners" :key="o.id" :value="o.id">
+            {{ o.name }}<span v-if="o.count"> ({{ o.count }})</span>
+          </option>
+        </select>
+
         <button @click="fetchTrainings" class="px-3 py-2 bg-indigo-600 text-white rounded">
           Filter
         </button>
+
         <button @click="downloadReport" class="px-3 py-2 bg-green-600 text-white rounded">
           Export XLSX
         </button>
@@ -35,13 +42,12 @@
         </thead>
         <tbody>
           <tr v-for="t in trainings" :key="t._id" class="align-top">
-            <td class="py-2 pr-4">{{ t.owner }}</td>
+            <td class="py-2 pr-4">{{ t.ownerName || '-' }}</td>
             <td class="py-2 pr-4">{{ t.trainingCode }}</td>
             <td class="py-2 pr-4">{{ formatPercent(t.trainingEffectivenessPercent) }}</td>
             <td class="py-2 pr-4">{{ formatDate(t.createdAt) }}</td>
             <td class="py-2 pr-4">{{ formatDate(t.updatedAt) }}</td>
             <td class="py-2 pr-4">
-              <!-- <button @click="openEdit(t)" class="mr-2 px-2 py-1 border rounded">Edit</button> -->
               <button @click="confirmDelete(t)" class="px-2 py-1 border rounded text-red-600">Delete</button>
             </td>
           </tr>
@@ -53,7 +59,6 @@
       </table>
     </div>
 
-    <!-- Delete confirmation modal -->
     <div v-if="deleteTarget" class="fixed inset-0 flex items-center justify-center bg-black/40">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
         <h4 class="text-lg font-semibold mb-3">Confirm Delete</h4>
@@ -71,7 +76,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import api from '../../services/axios'// ensure this axios attaches Authorization header
+import api from '../../services/axios' // axios instance with baseURL and auth header
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -80,7 +85,8 @@ const trainings = ref([])
 const loading = ref(false)
 const error = ref('')
 
-const ownerIdFilter = ref('')
+const owners = ref([]) // array of { id: string, name: string, count: number }
+const ownerIdFilter = ref('') // selected owner id (string)
 
 const deleteTarget = ref(null)
 const deleting = ref(false)
@@ -93,6 +99,39 @@ function formatDate(d) {
   try { return new Date(d).toLocaleString() } catch { return d }
 }
 
+/*
+  Derive owners list from an array of trainings (owner id, ownerName).
+  This avoids needing a separate /filters backend endpoint.
+*/
+function deriveOwnersFromTrainings(allTrainings) {
+  const map = new Map()
+  for (const t of allTrainings) {
+    const id = t.owner ? String(t.owner) : null
+    const name = t.ownerName || 'Unknown'
+    if (!id) continue
+    if (!map.has(id)) map.set(id, { id, name, count: 1 })
+    else map.get(id).count++
+  }
+  const arr = Array.from(map.values())
+  arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+  return arr
+}
+
+/*
+  Load owners for the dropdown by fetching all trainings once (no filter).
+  If your DB is very large, consider adding a backend endpoint to return owners only.
+*/
+async function loadOwners() {
+  try {
+    const res = await api.get('http://localhost:3000/api/trainings/owners') // no params => all trainings
+    const data = Array.isArray(res.data) ? res.data : (res.data?.trainings || [])
+    owners.value = deriveOwnersFromTrainings(data)
+  } catch (err) {
+    // ignore owners loading failure (dropdown will be empty), but log for debugging
+    console.error('Failed to load owners for filter:', err)
+  }
+}
+
 async function fetchTrainings() {
   loading.value = true
   error.value = ''
@@ -101,13 +140,16 @@ async function fetchTrainings() {
     if (ownerIdFilter.value && ownerIdFilter.value.trim() !== '') {
       params.ownerId = ownerIdFilter.value.trim()
     }
-    const res = await api.get('https://training-backend-topaz.vercel.app/api/trainings', { params })
-    trainings.value = res.data || []
-    console.log(trainings)
+    const res = await api.get('http://localhost:3000/api/trainings', { params })
+    trainings.value = Array.isArray(res.data) ? res.data : (res.data?.trainings || [])
+    // If owners not loaded yet (first load), derive from the unfiltered dataset already loaded by loadOwners.
+    // If loadOwners failed earlier, fallback to deriving from current trainings (may be filtered).
+    if (owners.value.length === 0) {
+      owners.value = deriveOwnersFromTrainings(trainings.value)
+    }
   } catch (err) {
     console.error(err)
     if (err.response && err.response.status === 401) {
-      // not authenticated as admin — redirect to login
       router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
       return
     }
@@ -117,10 +159,11 @@ async function fetchTrainings() {
   }
 }
 
-// function openEdit(t) {
-//   // navigate to an admin edit page or reuse component logic; example route:
-//   router.push({ name: 'admin-training-edit', params: { id: t._id } })
-// }
+function onOwnerChange() {
+  // selecting owner name sets ownerIdFilter (bound to select value),
+  // fetch trainings will pass ownerId to backend
+  fetchTrainings()
+}
 
 function confirmDelete(t) {
   deleteTarget.value = t
@@ -130,7 +173,7 @@ async function deleteTraining() {
   if (!deleteTarget.value) return
   deleting.value = true
   try {
-    await api.delete(`https://training-backend-topaz.vercel.app/api/trainings/${deleteTarget.value._id}`)
+    await api.delete(`/trainings/${deleteTarget.value._id}`)
     trainings.value = trainings.value.filter(x => x._id !== deleteTarget.value._id)
     deleteTarget.value = null
   } catch (err) {
@@ -142,15 +185,12 @@ async function deleteTraining() {
 }
 
 function downloadReport() {
-  // simple: let browser handle download and cookies/Authorization header via axios instance is not needed for direct link
-  // If your server requires Authorization header, use fetch and download blob (example below).
-  const url = 'https://training-backend-topaz.vercel.app/api/report-excel' // admin export endpoint
-  // Try direct navigation first (browser will send cookies if using cookie auth). If using Bearer token in localStorage, fetch blob instead:
+  const url = '/report-excel'
   if (window.confirm('Download full report as XLSX?')) {
-    // Using fetch to include bearer token from localStorage (if axios sets token in header, you can reuse it)
     const token = localStorage.getItem('auth_token')
+    const fullUrl = (api.defaults.baseURL || '') + url
     if (token) {
-      fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(fullUrl, { headers: { Authorization: `Bearer ${token}` } })
         .then(async (resp) => {
           if (!resp.ok) throw new Error('Download failed')
           const blob = await resp.blob()
@@ -165,14 +205,15 @@ function downloadReport() {
         })
         .catch((e) => alert(e.message || 'Export failed'))
     } else {
-      // fallback: navigate directly (works if server accepts cookies or no auth)
-      window.location.href = url
+      window.location.href = fullUrl
     }
   }
 }
 
-onMounted(() => {
-  fetchTrainings()
+onMounted(async () => {
+  // load owners first (unfiltered), then load trainings (which will respect selected owner if any)
+  await loadOwners()
+  await fetchTrainings()
 })
 </script>
 
