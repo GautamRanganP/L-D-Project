@@ -123,7 +123,7 @@ function deriveOwnersFromTrainings(allTrainings) {
 */
 async function loadOwners() {
   try {
-    const res = await api.get('http://localhost:3000/api/trainings/owners') // no params => all trainings
+    const res = await api.get('https://training-backend-topaz.vercel.app/api/trainings/owners') // no params => all trainings
     const data = Array.isArray(res.data) ? res.data : (res.data?.trainings || [])
     owners.value = deriveOwnersFromTrainings(data)
   } catch (err) {
@@ -140,7 +140,7 @@ async function fetchTrainings() {
     if (ownerIdFilter.value && ownerIdFilter.value.trim() !== '') {
       params.ownerId = ownerIdFilter.value.trim()
     }
-    const res = await api.get('http://localhost:3000/api/trainings', { params })
+    const res = await api.get('https://training-backend-topaz.vercel.app/api/trainings', { params })
     trainings.value = Array.isArray(res.data) ? res.data : (res.data?.trainings || [])
     // If owners not loaded yet (first load), derive from the unfiltered dataset already loaded by loadOwners.
     // If loadOwners failed earlier, fallback to deriving from current trainings (may be filtered).
