@@ -682,7 +682,7 @@ console.log("Final Attendance",this.finalAttendance)
   
       const totalCount = finalAttendance.length;
 const effectivenessPercent = totalCount > 0
-  ? Number(((effectiveCount / totalCount) * 100).toFixed(2))
+  ? Number(((preAssessmentCount / totalCount) * 100).toFixed(2))
   : 0;
       
 // javascript
