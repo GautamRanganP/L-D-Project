@@ -24,7 +24,7 @@ export function getUser() {
 }
 
 export async function login(email, password) {
-  const res = await axios.post(`${import.meta.env.BACKEND_BASE_URL}/api/auth/login`, { email, password })
+  const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password })
   const token = res.data?.token
   if (!token) throw new Error('No token returned from login')
   setToken(token)
