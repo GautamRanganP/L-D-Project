@@ -126,7 +126,7 @@ async function fetchTrainings() {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get(`${process.env.BACKEND_BASE_URL}/api/trainings/mine`)
+    const res = await api.get(`${import.meta.env.BACKEND_BASE_URL}/api/trainings/mine`)
     trainings.value = res.data || []
   } catch (err) {
     console.error(err)
@@ -215,7 +215,7 @@ async function deleteTraining() {
 function downloadReport() {
   // simple: let browser handle download and cookies/Authorization header via axios instance is not needed for direct link
   // If your server requires Authorization header, use fetch and download blob (example below).
-  const url = `${process.env.BACKEND_BASE_URL}/api/report-excel/mine` // admin export endpoint
+  const url = `${import.meta.env.BACKEND_BASE_URL}/api/report-excel/mine` // admin export endpoint
   // Try direct navigation first (browser will send cookies if using cookie auth). If using Bearer token in localStorage, fetch blob instead:
   if (window.confirm('Download full report as XLSX?')) {
     // Using fetch to include bearer token from localStorage (if axios sets token in header, you can reuse it)
