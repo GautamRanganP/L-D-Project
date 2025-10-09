@@ -727,7 +727,7 @@ const row3 = [
 console.log('nonEffectiveCount:', nonEffectiveCount);
 console.log('effectivenessPercent:', effectivenessPercent + '%');
 
-worksheet.insertRow(1, row3); // insert bottom-most first to preserve order at top
+ 
 worksheet.insertRow(1, row2);
 worksheet.insertRow(1, row1);
 
@@ -906,7 +906,7 @@ worksheet.insertRow(1, row1);
           fgColor: { argb: "B7D1F1" },
         };
       });
-      const dataRows = worksheet.getRows(5, finalAttendance.length);
+      const dataRows = worksheet.getRows(4, finalAttendance.length);
       console.log('col',this.finalAttendanceWithNomination.length,finalAttendance.length,this.finalAttendancedifference.length)
       dataRows.forEach((row,rowNumber) => {
         row.eachCell((cell, colNumber) => {
@@ -1009,8 +1009,8 @@ pctCell.alignment = { horizontal: 'center' };
 worksheet.getRow(2).getCell(2).value = Number(effectiveCount) || 0;
 worksheet.getRow(2).getCell(2).numFmt = '#,##0';
 
-worksheet.getRow(3).getCell(2).value = Number(nonEffectiveCount) || 0;
-worksheet.getRow(3).getCell(2).numFmt = '#,##0';
+// worksheet.getRow(3).getCell(2).value = Number(nonEffectiveCount) || 0;
+// worksheet.getRow(3).getCell(2).numFmt = '#,##0';
 
 worksheet.getRow(1).getCell(5).value = Number(preAssessmentCount) || 0;
 worksheet.getRow(1).getCell(5).numFmt = '#,##0';
@@ -1019,7 +1019,7 @@ worksheet.getRow(2).getCell(5).numFmt = '#,##0';
 
 
 const token = getToken()
-const res = await fetch('https://training-backend-topaz.vercel.app/api/trainings', {
+const res = await fetch(`${API_URL}/api/trainings`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
