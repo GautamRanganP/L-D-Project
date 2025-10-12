@@ -682,7 +682,7 @@ console.log("Final Attendance",this.finalAttendance)
   
       const totalCount = finalAttendance.length;
 const effectivenessPercent = totalCount > 0
-  ? Number(((preAssessmentCount / totalCount) * 100).toFixed(2))
+  ? Number(((effectiveCount / preAssessmentCount) * 100).toFixed(2))
   : 0;
       
 // javascript
@@ -811,19 +811,19 @@ worksheet.insertRow(1, row1);
 
               if(finalAttendance[0].PREASSESSMENT_PERCENT){
       worksheet.getColumn("Preassessment").eachCell((cell, rowNumber) => {
-            if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4) {
+            if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
     }
        if(finalAttendance[0].POSTASSESSMENT_PERCENT){
       worksheet.getColumn("Postassessment").eachCell((cell, rowNumber) => {
-         if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
+         if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3)  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
            worksheet.getColumn("Delta").eachCell((cell, rowNumber) => {
-             if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
+             if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 )  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
@@ -831,23 +831,23 @@ worksheet.insertRow(1, row1);
     }
         if(finalAttendance[0].MANAGER_FEEDBACK){
       worksheet.getColumn("PretrainingManagersFeedback").eachCell((cell, rowNumber) => {
-           if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
+           if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 )  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
     }
           worksheet.getColumn("session").eachCell((cell, rowNumber) => {
-      if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
+      if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 )  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
       worksheet.getColumn("emp_id").eachCell((cell, rowNumber) => {
- if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
+ if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 )  {
           cell.alignment = { horizontal: "left", vertical: "middle" };
         }
       });
       worksheet.getColumn("days").eachCell((cell, rowNumber) => {
-       if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4)  {
+       if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3)  {
           if (excelDateLocate.length > 1) {
             cell.value = {
               formula: `COUNTIFS(${excelDateLocate[0] + rowNumber}:${
@@ -868,7 +868,7 @@ worksheet.insertRow(1, row1);
       let excelTotalDays = worksheet.getColumn("session").letter;
       let excelDaysPresent = worksheet.getColumn("days").letter;
       worksheet.getColumn("attendance").eachCell((cell, rowNumber) => {
-       if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 && rowNumber !== 4) {
+       if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3) {
           cell.value = {
             formula: `ROUND(${excelDaysPresent + rowNumber}/${
               excelTotalDays + rowNumber
@@ -892,7 +892,7 @@ worksheet.insertRow(1, row1);
         column.width = maxLength < 15 ? 15 : maxLength;
       });
 
-      const headerRow = worksheet.getRow(4);
+      const headerRow = worksheet.getRow(3);
       headerRow.eachCell((cell, colNumber) => {
         cell.border = {
           top: { style: "thin", color: { argb: "000000" } },
@@ -956,7 +956,7 @@ worksheet.insertRow(1, row1);
 const labelFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDDEBF7' } }; // label background
 const valueFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } }; // value background
 
-const rowsToStyle = [1, 2, 3];
+const rowsToStyle = [1, 2];
 rowsToStyle.forEach(rNum => {
   const r = worksheet.getRow(rNum);
 
@@ -1019,7 +1019,7 @@ worksheet.getRow(2).getCell(5).numFmt = '#,##0';
 
 
 const token = getToken()
-const res = await fetch(`${API_URL}/api/trainings`, {
+const res = await fetch(`${import.meta.env.VITE_API_URL}/api/trainings`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -1040,7 +1040,7 @@ if (res.ok && res.status === 201) {
 }
 
 // commit rows if using streaming writer or to be safe
-[1,2,3].forEach(i => { const r = worksheet.getRow(i); if (typeof r.commit === 'function') r.commit(); });
+[1,2].forEach(i => { const r = worksheet.getRow(i); if (typeof r.commit === 'function') r.commit(); });
       const blob = await workbook.xlsx.writeBuffer();
       // Create a blob URL
       const blobUrl = window.URL.createObjectURL(

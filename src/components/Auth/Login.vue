@@ -28,7 +28,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="login-page min-h-screen flex items-center justify-center bg-gray-100 p-4">
+  <div class="login-page min-h-screen flex items-center justify-center p-4">
     <div class="login-card w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
       <div class="p-6">
         <h1 class="text-2xl font-semibold text-gray-800 mb-2">Sign in</h1>
