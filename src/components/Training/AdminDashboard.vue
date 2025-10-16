@@ -2,8 +2,8 @@
   <div class="p-6 max-w-7xl mx-auto">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-800">All Trainings (Admin)</h1>
-        <p class="text-sm text-gray-500 mt-1">Advanced filtering, sorting, and pagination — optimized for large datasets.</p>
+        <h1 class="text-2xl font-semibold text-gray-800">All Trainings Effectiveness</h1>
+        <p class="text-sm text-gray-500 mt-1"></p>
       </div>
 
       <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
@@ -37,18 +37,6 @@
             </option>
           </select>
         </div>
-<!-- 
-        <div class="bg-white border rounded px-2 py-1 shadow-sm flex items-center gap-2">
-          <select v-model.number="monthInput" class="text-sm" aria-label="Filter by month">
-            <option :value="0">All months</option>
-            <option v-for="(m, idx) in months" :key="idx" :value="idx+1">{{ m }}</option>
-          </select>
-
-          <select v-model.number="yearInput" class="text-sm" aria-label="Filter by year">
-            <option :value="0">All years</option>
-            <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-          </select>
-        </div> -->
 
         <div class="flex items-center gap-2 ml-auto sm:ml-0">
           <button
@@ -92,8 +80,8 @@
 
       <div v-else-if="error" class="text-sm text-red-600">{{ error }}</div>
 
-      <div v-else-if="hasPendingFilters" class="text-sm text-yellow-700">
-        Filters changed — press Enter or click Apply to run the search
+      <div v-else-if="!loading && hasPendingFilters" class="text-sm text-yellow-700">
+        Filters changed u{2014} press Enter or click Apply to run the search
       </div>
     </div>
 
@@ -142,14 +130,14 @@
           </thead>
 
           <tbody>
-            <tr v-if="!loading && trainings.length === 0">
+            <tr v-if="!loading && Array.isArray(trainings) && trainings.length === 0">
               <td colspan="6" class="px-6 py-10 text-center text-gray-500">
                 <div class="mb-2">No trainings found for current filters.</div>
                 <button @click="resetFilters" class="px-3 py-2 bg-indigo-50 text-indigo-700 border rounded">Clear filters</button>
               </td>
             </tr>
 
-            <tr v-for="t in trainings" :key="t._id" class="border-t hover:bg-gray-50">
+            <tr v-for="t in trainings || []" :key="t._id" class="border-t hover:bg-gray-50">
               <td class="px-4 py-3">
                 <div class="font-medium text-gray-800">{{ t.ownerName || '-' }}</div>
                 <div class="text-xs text-gray-500">{{ t.owner || '' }}</div>
@@ -186,7 +174,7 @@
 
       <div class="flex flex-col md:flex-row items-center justify-between gap-3 px-4 py-3 border-t bg-gray-50">
         <div class="text-xs text-gray-600">
-          Showing <strong>{{ fromItem }}</strong> - <strong>{{ toItem }}</strong> of <strong>{{ totalCount }}</strong> trainings
+          Showing <strong>{{ fromItem }}</strong> - <strong>{{ toItem }}</strong> of <strong>{{ totalCountDisplay }}</strong> trainings
         </div>
 
         <div class="flex items-center gap-2">
@@ -249,26 +237,23 @@
 <script setup>
 import { ref, onMounted, computed, defineComponent, h } from 'vue'
 import api from '../../services/axios'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 
-const trainings = ref([])
-const loading = ref(false)
+const trainings = ref(null)   // null = not loaded yet
+const loading = ref(true)
 const error = ref('')
 
-// owner dropdown source
 const owners = ref([])
 
-// pending input values (bound to form controls)
 const trainingCodeInput = ref('')
 const ownerIdInput = ref('')
 
-// month/year inputs
-const monthInput = ref(0) // 0 = all months
-const yearInput = ref(0)  // 0 = all years
+const monthInput = ref(0)
+const yearInput = ref(0)
 
-// applied filters (used when fetching)
 const applied = ref({
   trainingCode: '',
   ownerId: '',
@@ -279,29 +264,27 @@ const applied = ref({
 const deleteTarget = ref(null)
 const deleting = ref(false)
 
-// pagination + sorting
 const currentPage = ref(1)
 const pageSize = ref(20)
-const totalCount = ref(0)
+const totalCount = ref(null) // null = not loaded yet
 
-const sortBy = ref('updatedAt')      // default sort
-const sortDir = ref('desc')          // 'asc' | 'desc' | null
+const sortBy = ref('updatedAt')
+const sortDir = ref('desc')
 
-// month / year lists for UI
 const months = [
   'January','February','March','April','May','June','July','August','September','October','November','December'
 ]
 const years = (() => {
   const y = new Date().getFullYear()
   const arr = []
-  for (let i = 0; i <= 6; i++) arr.push(y - i) // last 7 years, adjust if needed
+  for (let i = 0; i <= 6; i++) arr.push(y - i)
   return arr
 })()
 
-// computed helpers
-const totalPages = computed(() => Math.max(1, Math.ceil((totalCount.value || 0) / pageSize.value)))
-const fromItem = computed(() => totalCount.value === 0 ? 0 : (currentPage.value - 1) * pageSize.value + 1)
-const toItem = computed(() => Math.min(totalCount.value, currentPage.value * pageSize.value))
+const totalPages = computed(() => Math.max(1, Math.ceil(((totalCount.value || 0) / pageSize.value))))
+const fromItem = computed(() => (totalCount.value ? (currentPage.value - 1) * pageSize.value + 1 : 0))
+const toItem = computed(() => (totalCount.value ? Math.min(totalCount.value, currentPage.value * pageSize.value) : 0))
+const totalCountDisplay = computed(() => (totalCount.value === null ? '—' : totalCount.value))
 
 const hasPendingFilters = computed(() => {
   return (String(trainingCodeInput.value || '').trim() !== String(applied.value.trainingCode || '').trim())
@@ -310,7 +293,6 @@ const hasPendingFilters = computed(() => {
     || (Number(yearInput.value || 0) !== Number(applied.value.year || 0))
 })
 
-// small UI helpers
 function formatPercent(v) {
   return v == null ? '-' : Number(v).toFixed(2) + '%'
 }
@@ -319,27 +301,14 @@ function formatDate(d) {
   try { return new Date(d).toLocaleString() } catch { return d }
 }
 
-/* ---------------------------
-   Owners loading (lightweight)
-   --------------------------- */
 async function loadOwners() {
   try {
-    // this endpoint should return lightweight owner list if possible
     const res = await api.get(`${import.meta.env.VITE_API_URL}/api/trainings/owners`)
     const data = Array.isArray(res.data) ? res.data : (res.data?.owners || [])
-    if (data.length && data[0] && (data[0].id || data[0]._id) && data[0].name) {
+    if (data.length && (data[0].id || data[0]._id) && data[0].name) {
       owners.value = data.map(o => ({ id: o.id || o._id, name: o.name, count: o.count || 0 }))
     } else {
-      // derive locally from trainings payload fallback
-      const map = new Map()
-      for (const t of data) {
-        const id = t.owner ? String(t.owner) : null
-        const name = t.ownerName || 'Unknown'
-        if (!id) continue
-        if (!map.has(id)) map.set(id, { id, name, count: 1 })
-        else map.get(id).count++
-      }
-      owners.value = Array.from(map.values()).sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      owners.value = []
     }
   } catch (err) {
     console.error('Failed to load owners for filter:', err)
@@ -347,10 +316,6 @@ async function loadOwners() {
   }
 }
 
-/* ---------------------------
-   Fetch trainings (server-side)
-   Accepts page / limit; also sends sortBy / sortDir and month/year
-   --------------------------- */
 async function fetchTrainings({ page = currentPage.value, limit = pageSize.value } = {}) {
   loading.value = true
   error.value = ''
@@ -366,7 +331,7 @@ async function fetchTrainings({ page = currentPage.value, limit = pageSize.value
     const res = await api.get(`${import.meta.env.VITE_API_URL}/api/trainings`, { params })
     const data = res.data || {}
     trainings.value = data.trainings || []
-    totalCount.value = data.totalCount || 0
+    totalCount.value = typeof data.totalCount === 'number' ? data.totalCount : (Array.isArray(data.trainings) ? data.trainings.length : 0)
     currentPage.value = data.page || page
     pageSize.value = data.limit || limit
   } catch (err) {
@@ -376,14 +341,13 @@ async function fetchTrainings({ page = currentPage.value, limit = pageSize.value
       return
     }
     error.value = err?.response?.data?.message || 'Failed to load trainings'
+    trainings.value = []
+    totalCount.value = 0
   } finally {
     loading.value = false
   }
 }
 
-/* ---------------------------
-   Filter actions
-   --------------------------- */
 function applyFilters() {
   applied.value.trainingCode = (trainingCodeInput.value || '').trim()
   applied.value.ownerId = ownerIdInput.value || ''
@@ -408,9 +372,6 @@ function resetFilters() {
   fetchTrainings({ page: 1 })
 }
 
-/* ---------------------------
-   Owner select: small debounce and auto-apply
-   --------------------------- */
 let ownerApplyTimer = null
 function onOwnerSelect() {
   clearTimeout(ownerApplyTimer)
@@ -420,9 +381,6 @@ function onOwnerSelect() {
   }, 200)
 }
 
-/* ---------------------------
-   Sorting
-   --------------------------- */
 function toggleSort(col) {
   if (sortBy.value !== col) {
     sortBy.value = col
@@ -440,9 +398,6 @@ function toggleSort(col) {
   fetchTrainings({ page: 1 })
 }
 
-/* ---------------------------
-   Pagination controls
-   --------------------------- */
 function prevPage() {
   if (currentPage.value > 1) {
     currentPage.value--
@@ -472,9 +427,6 @@ function onPageSizeChange() {
   fetchTrainings({ page: 1, limit: pageSize.value })
 }
 
-/* ---------------------------
-   Actions: view, delete, export
-   --------------------------- */
 function viewTraining(t) {
   router.push({ name: 'training-view', params: { id: t._id } }).catch(() => {})
 }
@@ -488,8 +440,12 @@ async function deleteTraining() {
   deleting.value = true
   try {
     await api.delete(`${import.meta.env.VITE_API_URL}/api/trainings/${deleteTarget.value._id}`)
-    trainings.value = trainings.value.filter(x => x._id !== deleteTarget.value._id)
-    totalCount.value = Math.max(0, totalCount.value - 1)
+    if (Array.isArray(trainings.value)) {
+      trainings.value = trainings.value.filter(x => x._id !== deleteTarget.value._id)
+    } else {
+      trainings.value = []
+    }
+    totalCount.value = Math.max(0, (totalCount.value || 0) - 1)
     deleteTarget.value = null
   } catch (err) {
     console.error(err)
@@ -533,9 +489,6 @@ async function downloadReportCurrent() {
   }
 }
 
-/* ---------------------------
-   Init
-   --------------------------- */
 onMounted(async () => {
   await loadOwners()
   trainingCodeInput.value = applied.value.trainingCode || ''
@@ -545,9 +498,14 @@ onMounted(async () => {
   await fetchTrainings()
 })
 
-/* ---------------------------
-   Lightweight SortIcon component
-   --------------------------- */
+onBeforeRouteUpdate((to, from, next) => {
+  trainings.value = null
+  totalCount.value = null
+  loading.value = true
+  // refresh owners as well in case they changed
+  Promise.all([loadOwners(), fetchTrainings()]).finally(() => next())
+})
+
 const SortIcon = defineComponent({
   name: 'SortIcon',
   props: { col: String, sortBy: [String, null], sortDir: [String, null] },
@@ -581,7 +539,6 @@ table th, table td { padding: 0.75rem 1rem; vertical-align: middle; }
 table th { font-weight: 600; color: #374151; }
 .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Helvetica Neue", monospace; }
 
-/* simple responsive visibility helpers if Tailwind not fully present */
 @media (max-width: 640px) {
   .hidden.sm:table-cell { display: none; }
 }

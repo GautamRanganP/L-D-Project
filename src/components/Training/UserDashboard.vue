@@ -2,8 +2,8 @@
   <div class="p-6 max-w-7xl mx-auto">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-800">My Trainings</h1>
-        <p class="text-sm text-gray-500 mt-1">Search, filter, sort and export your trainings — client-side filtering for fast UX.</p>
+        <h1 class="text-2xl font-semibold text-gray-800">My Training Effectiveness</h1>
+        <p class="text-sm text-gray-500 mt-1">Search, filter, sort and export your trainings u{2014} client-side filtering for fast UX.</p>
       </div>
 
       <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
@@ -60,7 +60,7 @@
             <button @click="downloadReport" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm shadow">
               Export
             </button>
-            <div class="absolute -right-2 -top-2 bg-indigo-600 text-white text-xs rounded-full px-2 py-0.5" v-if="trainings.length !== null">
+            <div class="absolute -right-2 -top-2 bg-indigo-600 text-white text-xs rounded-full px-2 py-0.5" v-if="Array.isArray(trainings)">
               {{ trainings.length }}
             </div>
           </div>
@@ -78,8 +78,8 @@
 
       <div v-else-if="error" class="text-sm text-red-600">{{ error }}</div>
 
-      <div v-else-if="hasPendingFilters" class="text-sm text-yellow-700">
-        Filters changed — press Enter or click Apply to run the search
+      <div v-else-if="!loading && hasPendingFilters" class="text-sm text-yellow-700">
+        Filters changed u{2014} press Enter or click Apply to run the search
       </div>
     </div>
 
@@ -121,7 +121,7 @@
           </thead>
 
           <tbody>
-            <tr v-if="!loading && pagedItems.length === 0">
+            <tr v-if="!loading && Array.isArray(trainings) && pagedItems.length === 0">
               <td colspan="5" class="px-6 py-10 text-center text-gray-500">
                 <div class="mb-2">No trainings found for current filters.</div>
                 <button @click="resetFilters" class="px-3 py-2 bg-indigo-50 text-indigo-700 border rounded">Clear filters</button>
@@ -198,12 +198,14 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router'
 import api from '../../services/axios'
-import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 
-const trainings = ref([]) // original fetched data (all user's trainings)
+// mark "not yet loaded" with null instead of empty array
+const trainings = ref(null)
 const loading = ref(true)
 const error = ref('')
 
@@ -248,7 +250,6 @@ async function fetchTrainings() {
   error.value = ''
   try {
     const res = await api.get(`${import.meta.env.VITE_API_URL}/api/trainings/mine`)
-    // endpoint returns array
     trainings.value = Array.isArray(res.data) ? res.data : (res.data?.trainings || [])
   } catch (err) {
     console.error(err)
@@ -257,13 +258,17 @@ async function fetchTrainings() {
       return
     }
     error.value = 'Failed to load trainings'
+    trainings.value = [] // mark loaded but empty to avoid indefinite null while still showing error UI
   } finally {
     loading.value = false
   }
 }
 
 // client-side filtered array (computed)
+// if trainings not yet loaded, return empty array so downstream computed values remain safe
 const filtered = computed(() => {
+  if (!Array.isArray(trainings.value)) return []
+
   const code = (applied.value.trainingCode || '').trim().toLowerCase()
   const month = Number(applied.value.month || 0)
   const year = Number(applied.value.year || 0)
@@ -345,7 +350,7 @@ function resetFilters() {
 
 let ownerApplyTimer = null
 function onOwnerSelect() {
-  // not applicable for user dashboard — kept to avoid accidental references
+  // not applicable for user dashboard u{2014} kept to avoid accidental references
   clearTimeout(ownerApplyTimer)
 }
 
@@ -393,7 +398,7 @@ async function deleteTraining() {
   deleting.value = true
   try {
     await api.delete(`${import.meta.env.VITE_API_URL}/api/trainings/${deleteTarget.value._id}`)
-    trainings.value = trainings.value.filter(x => x._id !== deleteTarget.value._id)
+    trainings.value = Array.isArray(trainings.value) ? trainings.value.filter(x => x._id !== deleteTarget.value._id) : []
     deleteTarget.value = null
   } catch (err) {
     console.error(err)
@@ -442,6 +447,14 @@ function formatDate(d) {
 // initialize
 onMounted(() => {
   fetchTrainings()
+})
+
+// reset and refetch when route changes so UI shows loading state
+onBeforeRouteUpdate((to, from, next) => {
+  // show loading while we refetch
+  trainings.value = null
+  loading.value = true
+  fetchTrainings().finally(() => next())
 })
 
 // keep filter inputs in sync: if user edits inputs, UI shows Apply state
