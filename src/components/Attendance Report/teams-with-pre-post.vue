@@ -653,31 +653,56 @@ console.log("Final Attendance",this.finalAttendance)
       let nonEffectiveCount = 0
       let preAssessmentCount = 0
       let postAssessmentCount = 0
+
+     const isValidPercent = (v) =>
+  v === "NA" || v == 0 ||
+  (v !== null &&
+    v !== undefined &&
+    String(v).trim() !== "" &&
+    Number.isFinite(Number(v)));
+
+
+    
+const isNumberGE0 = (v) => {
+  if (v === null || v === undefined || v === "NA") return false;
+  if (typeof v === 'boolean') return false; // exclude booleans
+  const n = Number(String(v).trim());
+  return Number.isFinite(n) && n >= 0;
+};
+
+
       finalAttendance.forEach((employee) => {
 
-         let sub 
-            if(employee.PREASSESSMENT_PERCENT && employee.POSTASSESSMENT_PERCENT){
-              if(employee.PREASSESSMENT_PERCENT !== "NA" && employee.POSTASSESSMENT_PERCENT !== "NA" ){
-                sub = Number(employee.POSTASSESSMENT_PERCENT) - Number(employee.PREASSESSMENT_PERCENT)
-              }
-              else{
-                sub = 0
-              }
-            }
-            
-          if(employee.PREASSESSMENT_PERCENT !== "NA"){
-            preAssessmentCount++
-          }  
-          if(employee.POSTASSESSMENT_PERCENT !== "NA"){
-            postAssessmentCount++
-          }  
-          if(sub > 0 || employee.POSTASSESSMENT_PERCENT == 100 ){
-            effectiveCount++
-          }
-          else{
-            nonEffectiveCount++
-          }
-      })
+         // javascript
+
+
+let sub = 0;
+
+// compute difference only when both values are valid (0 allowed)
+if (isValidPercent(employee.PREASSESSMENT_PERCENT) && isValidPercent(employee.POSTASSESSMENT_PERCENT)) {
+  sub = Number(employee.POSTASSESSMENT_PERCENT) - Number(employee.PREASSESSMENT_PERCENT);
+} else {
+  sub = 0;
+}
+
+// increment counts only when the values are valid (so 0 counts)
+if (isNumberGE0(employee.PREASSESSMENT_PERCENT)) {
+  preAssessmentCount++;
+}
+if (isNumberGE0(employee.POSTASSESSMENT_PERCENT)) {
+  postAssessmentCount++;
+}
+
+// determine effective vs non-effective
+if (sub > 0 || Number(employee.POSTASSESSMENT_PERCENT) === 100) {
+  effectiveCount++;
+} else {
+  nonEffectiveCount++;
+}
+
+     
+     
+        })
 
   
       const totalCount = finalAttendance.length;
@@ -723,7 +748,7 @@ const row3 = [
 
 
 
-  console.log('effectiveCount:', effectiveCount);
+console.log('effectiveCount:', effectiveCount);
 console.log('nonEffectiveCount:', nonEffectiveCount);
 console.log('effectivenessPercent:', effectivenessPercent + '%');
 
@@ -748,16 +773,18 @@ worksheet.insertRow(1, row1);
             "%"
         );
 
-        if(employee.PREASSESSMENT_PERCENT)
+   
+        if (isValidPercent(employee.PREASSESSMENT_PERCENT)) { // catches both null and undefined
           row.push(employee.PREASSESSMENT_PERCENT);
-        if(employee.POSTASSESSMENT_PERCENT)
+        }
+        if (isValidPercent(employee.POSTASSESSMENT_PERCENT)) { // catches both null and undefined
           row.push(employee.POSTASSESSMENT_PERCENT);
+        }
         if(employee.MANAGER_FEEDBACK)
           row.push(employee.MANAGER_FEEDBACK)
 
-
          let sub 
-            if(employee.PREASSESSMENT_PERCENT && employee.POSTASSESSMENT_PERCENT){
+            if(isValidPercent(employee.PREASSESSMENT_PERCENT) && isValidPercent(employee.POSTASSESSMENT_PERCENT)){
               if(employee.PREASSESSMENT_PERCENT !== "NA" && employee.POSTASSESSMENT_PERCENT !== "NA" ){
                 sub = Number(employee.POSTASSESSMENT_PERCENT) - Number(employee.PREASSESSMENT_PERCENT)
                 row.push(sub)
@@ -809,21 +836,21 @@ worksheet.insertRow(1, row1);
         });
       }
 
-              if(finalAttendance[0].PREASSESSMENT_PERCENT){
-      worksheet.getColumn("Preassessment").eachCell((cell, rowNumber) => {
+      if(isValidPercent(finalAttendance[0].PREASSESSMENT_PERCENT)){
+        worksheet.getColumn("Preassessment").eachCell((cell, rowNumber) => {
             if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3) {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
     }
-       if(finalAttendance[0].POSTASSESSMENT_PERCENT){
-      worksheet.getColumn("Postassessment").eachCell((cell, rowNumber) => {
+      if(isValidPercent(finalAttendance[0].POSTASSESSMENT_PERCENT)){
+        worksheet.getColumn("Postassessment").eachCell((cell, rowNumber) => {
          if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3)  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
-           worksheet.getColumn("Delta").eachCell((cell, rowNumber) => {
-             if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 )  {
+        worksheet.getColumn("Delta").eachCell((cell, rowNumber) => {
+      if (rowNumber !== 1 && rowNumber !== 2 && rowNumber !== 3 )  {
           cell.alignment = { horizontal: "center", vertical: "middle" };
         }
       });
