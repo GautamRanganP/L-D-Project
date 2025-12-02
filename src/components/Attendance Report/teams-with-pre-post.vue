@@ -175,7 +175,7 @@ if(PreJson.length>0){
   if (match) {
     return { ...employee, PREASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
   }
-  return { ...employee, PREASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+  return { ...employee, PREASSESSMENT_PERCENT: 0 }; // Add 'NA' if no match
 });
 
 }
@@ -186,7 +186,7 @@ if(PostJson.length>0){
   if (match) {
     return { ...employee, POSTASSESSMENT_PERCENT: match.Percentage }; // Add 'status' if there's a match
   }
-  return { ...employee, POSTASSESSMENT_PERCENT: "NA" }; // Add 'NA' if no match
+  return { ...employee, POSTASSESSMENT_PERCENT: 0 }; // Add 'NA' if no match
 });
 }
 
@@ -625,17 +625,17 @@ console.log("Final Attendance",this.finalAttendance)
 
       );
       
-     if(finalAttendance[0].PREASSESSMENT_PERCENT)
+    //  if(finalAttendance[0].PREASSESSMENT_PERCENT)
          headers.push({ header: "Pre-Assessment Percentage", key: "Preassessment" })
-     if(finalAttendance[0].POSTASSESSMENT_PERCENT)
+    //  if(finalAttendance[0].POSTASSESSMENT_PERCENT)
          headers.push({ header: "Post-Assessment Percentage", key: "Postassessment" })
      if(finalAttendance[0].MANAGER_FEEDBACK)
          headers.push({ header: "Pre-training Manager Feedback", key: "PretrainingManagersFeedback" }) 
-     if(finalAttendance[0].PREASSESSMENT_PERCENT && finalAttendance[0].POSTASSESSMENT_PERCENT){
+    //  if(finalAttendance[0].PREASSESSMENT_PERCENT && finalAttendance[0].POSTASSESSMENT_PERCENT){
          headers.push({ header: "Delta", key: "Delta" })
          headers.push({ header: "Effectiveness", key: "Effectiveness" })
          headers.push({ header: "Overall Training Completion (Attendance >= 50% & Post Assessment >= 60%)", key: "Overall Training Completion" })
-      }
+      // }
 
         
 
@@ -667,7 +667,7 @@ const isNumberGE0 = (v) => {
   if (v === null || v === undefined || v === "NA") return false;
   if (typeof v === 'boolean') return false; // exclude booleans
   const n = Number(String(v).trim());
-  return Number.isFinite(n) && n >= 0;
+  return Number.isFinite(n) && n > 0;
 };
 
 
