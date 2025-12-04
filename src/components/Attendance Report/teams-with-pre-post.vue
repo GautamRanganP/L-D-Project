@@ -707,7 +707,7 @@ if (sub > 0 || Number(employee.POSTASSESSMENT_PERCENT) === 100) {
   
       const totalCount = finalAttendance.length;
 const effectivenessPercent = totalCount > 0
-  ? Number(((effectiveCount / preAssessmentCount) * 100).toFixed(2))
+  ? Number(((effectiveCount / postAssessmentCount) * 100).toFixed(2))
   : 0;
       
 // javascript
